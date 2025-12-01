@@ -4,6 +4,9 @@
 
 echo "🚀 Starting Financial Advisor..."
 
+# Set Python path to include backend directory
+export PYTHONPATH="${PYTHONPATH}:/opt/render/project/src/backend"
+
 # Initialize database
 echo "📦 Initializing database..."
 cd backend
@@ -16,5 +19,4 @@ python init_admin.py || echo "⚠️ Admin user already exists or failed to crea
 
 # Start Flask server with Gunicorn (production-ready)
 echo "✅ Starting Flask server with Gunicorn..."
-cd ..
-exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile - backend.main:app
+exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile - --chdir /opt/render/project/src/backend main:app
