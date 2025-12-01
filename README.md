@@ -4,46 +4,69 @@ AI-powered Personal Finance Management System with intelligent chatbot assistant
 
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Flask](https://img.shields.io/badge/flask-3.0.0-green.svg)
+![PostgreSQL](https://img.shields.io/badge/postgresql-15+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+## ✨ Live Demo
+
+🚀 **[https://smartbudget-assistant.onrender.com](https://smartbudget-assistant.onrender.com)**
 
 ## 🌟 Features
 
-- 🤖 **AI SmartBudget Assistant** - Powered by OpenAI GPT-4 & Google Gemini
+### 🎨 Authentication & Security
+- 🔐 **Secure User Registration** - Email verification with OTP (One-Time Password)
+- 🔑 **Password Recovery** - Forgot password with email reset link
+- 🌐 **Bilingual Support** - Indonesian & English interface
+- 🎯 **Strong Password Generator** - Built-in password suggestion tool
+- ✅ **Modern UI/UX** - Professional glassmorphism design with smooth animations
+- 📱 **Fully Responsive** - Optimized for desktop, tablet, and mobile devices
+
+### 🤖 AI Financial Assistant
+- 💬 **AI SmartBudget Assistant** - Powered by OpenAI GPT-4o-mini & Google Gemini 2.5 Flash
 - 💸 **Smart Transaction Tracking** - Natural language expense/income recording
 - 📊 **Budget Management** - Track spending by category with visual insights
-- 🎯 **Savings Goals** - Set and monitor financial targets
+- 🎯 **Savings Goals** - Set and monitor financial targets with progress tracking
 - 💳 **Multi-Account Support** - Manage multiple payment methods (Cash, BCA, OVO, Gopay, etc.)
 - 🔄 **Fund Transfers** - Transfer between accounts and savings goals
 - 📈 **Financial Reports** - Monthly summaries and analytics
-- 🔐 **Secure Authentication** - User management with session handling
 - 🧠 **Conversation Memory** - Context-aware chatbot with long-term memory
 
 ## 🚀 Tech Stack
 
 **Backend:**
 - Python 3.11+
-- Flask 3.0
-- SQLite Database
+- Flask 3.0.0
+- PostgreSQL 15+ (Production - Neon Database)
+- SQLite (Development)
 - OpenAI API (GPT-4o-mini)
 - Google Generative AI (Gemini 2.5 Flash)
+- Gmail SMTP (Email Service)
 
 **Frontend:**
 - Vanilla JavaScript
 - HTML5/CSS3
-- Responsive Design
+- FontAwesome 6.4.0 Icons
+- Responsive Design (Mobile-First)
+- Pure CSS Animations
+
+**Deployment:**
+- Render.com Web Service
+- Gunicorn 21.2.0 WSGI Server
 
 ## 📦 Installation
 
 ### Prerequisites
 - Python 3.11 or higher
-- pip
-- Virtual environment (recommended)
+- PostgreSQL 15+ (production) or SQLite (development)
+- OpenAI API key
+- Google Gemini API key
+- Gmail account for SMTP email service
 
 ### Setup
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/SmartBudget-Assistant.git
+git clone https://github.com/mfathul21/SmartBudget-Assistant.git
 cd SmartBudget-Assistant
 ```
 
@@ -68,11 +91,21 @@ pip install -r requirements.txt
 # Copy example env file
 cp .env.example backend/.env
 
-# Edit backend/.env with your API keys
+# Edit backend/.env with your credentials
 FLASK_SECRET_KEY=your-secret-key-here
 OPENAI_API_KEY=sk-your-openai-api-key
-GOOGLE_API_KEY=your-google-api-key
+GOOGLE_API_KEY=your-google-gemini-api-key
+DATABASE_URL=sqlite:///smartbudget.db  # For local development
+
+# Email Configuration (Gmail SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-specific-password
+SMTP_FROM=your-email@gmail.com
 ```
+
+> **Note:** For Gmail, you need to create an App Password. See [EMAIL_SETUP.md](EMAIL_SETUP.md) for detailed instructions.
 
 5. **Initialize database**
 ```bash
@@ -92,7 +125,9 @@ The application will be available at `http://localhost:8000`
 ### Register & Login
 1. Navigate to `http://localhost:8000/register.html`
 2. Create an account with email and password
-3. Login at `http://localhost:8000/login.html`
+3. Verify your email with the OTP code sent to your inbox
+4. Login at `http://localhost:8000/login.html`
+5. Use "Forgot Password" if you need to reset your password
 
 ### Chat with AI Assistant
 
@@ -140,34 +175,49 @@ The AI assistant understands natural language commands:
 ```
 SmartBudget-Assistant/
 ├── backend/
-│   ├── archive/          # Development & testing files
-│   ├── __pycache__/      # Python cache
-│   ├── auth.py           # Authentication & authorization
-│   ├── config.py         # Configuration management
-│   ├── database.py       # Database connection & init
-│   ├── embeddings.py     # Vector embeddings for semantic search
-│   ├── helpers.py        # Helper functions
-│   ├── llm_executor.py   # LLM action execution
-│   ├── llm_tools.py      # LLM tool definitions
-│   ├── main.py           # Main Flask application
-│   ├── memory.py         # Conversation memory management
-│   ├── requirements.txt  # Python dependencies
-│   ├── schema.sql        # Database schema
-│   └── finance.db        # SQLite database (created at runtime)
+│   ├── archive/              # Development & testing files
+│   ├── __pycache__/          # Python cache
+│   ├── auth.py               # Authentication, OTP, password reset
+│   ├── config.py             # Configuration management
+│   ├── database.py           # Database connection & initialization
+│   ├── embeddings.py         # Vector embeddings for semantic search
+│   ├── helpers.py            # Email utilities & helper functions
+│   ├── llm_executor.py       # AI model interaction & execution
+│   ├── llm_tools.py          # AI function definitions
+│   ├── main.py               # Main Flask application & API endpoints
+│   ├── memory.py             # Conversation memory management
+│   ├── requirements.txt      # Python dependencies
+│   ├── schema.sql            # PostgreSQL/SQLite database schema
+│   ├── init_admin.py         # Admin user initialization script
+│   └── reset_db.py           # Database reset utility
 ├── public/
-│   ├── static/           # CSS, JS files
-│   ├── uploads/avatars/  # User avatars
-│   ├── index.html        # Dashboard
-│   ├── login.html        # Login page
-│   ├── register.html     # Registration page
-│   ├── profile.html      # User profile
-│   ├── settings.html     # App settings
-│   └── admin.html        # Admin panel
-├── .env.example          # Environment variables template
-├── .gitignore           # Git ignore rules
-├── render.yaml          # Render deployment config
-├── startup.sh           # Startup script
-└── README.md            # This file
+│   ├── static/
+│   │   ├── app.js            # Core frontend logic & translations
+│   │   ├── modals.js         # Terms & Privacy modal content
+│   │   ├── admin.js          # Admin dashboard logic
+│   │   ├── profile.js        # Profile management
+│   │   ├── savings-helper.js # Savings goal utilities
+│   │   └── styles.css        # Global styles with responsive design
+│   ├── uploads/avatars/      # User profile pictures
+│   ├── index.html            # Main SmartBudget assistant interface
+│   ├── login.html            # Login page (bilingual)
+│   ├── register.html         # Registration with OTP verification
+│   ├── forgot.html           # Password recovery page
+│   ├── reset-password.html   # Password reset with token
+│   ├── profile.html          # User profile management
+│   ├── settings.html         # User settings & preferences
+│   └── admin.html            # Admin dashboard
+├── assets/                   # Static assets & images
+├── .env.example              # Environment variables template
+├── .gitignore                # Git ignore rules
+├── render.yaml               # Render.com deployment configuration
+├── startup.sh                # Production startup script
+├── wsgi.py                   # WSGI entry point for Gunicorn
+├── requirements.txt          # Root Python dependencies
+├── EMAIL_SETUP.md            # Gmail SMTP configuration guide
+├── PRODUCTION_CHECKLIST.md   # Pre-deployment security checklist
+├── LICENSE                   # MIT License
+└── README.md                 # This file
 ```
 
 ## 🔧 Configuration
@@ -177,8 +227,17 @@ SmartBudget-Assistant/
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `FLASK_SECRET_KEY` | Flask session secret key | Yes |
-| `OPENAI_API_KEY` | OpenAI API key for GPT-4 | Yes |
-| `GOOGLE_API_KEY` | Google API key for Gemini | Yes |
+| `OPENAI_API_KEY` | OpenAI API key (GPT-4o-mini) | Yes |
+| `GOOGLE_API_KEY` | Google Gemini API key (2.5 Flash) | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes (Production) |
+| `SMTP_HOST` | Email server (smtp.gmail.com) | Yes |
+| `SMTP_PORT` | Email port (587) | Yes |
+| `SMTP_USER` | Gmail address | Yes |
+| `SMTP_PASSWORD` | Gmail App Password | Yes |
+| `SMTP_FROM` | From email address | Yes |
+| `APP_URL` | Application URL | Yes (Production) |
+| `RECAPTCHA_SITE_KEY` | reCAPTCHA v3 site key | Optional |
+| `RECAPTCHA_SECRET_KEY` | reCAPTCHA v3 secret key | Optional |
 
 ### Supported Accounts
 
@@ -200,11 +259,9 @@ SmartBudget-Assistant/
 
 1. **Push to GitHub**
 ```bash
-git init
 git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/yourusername/SmartBudget-Assistant.git
-git push -u origin main
+git commit -m "Deploy: Production ready"
+git push origin main
 ```
 
 2. **Connect to Render**
@@ -214,8 +271,18 @@ git push -u origin main
    - Render will auto-detect `render.yaml`
 
 3. **Set environment variables** in Render dashboard:
-   - `OPENAI_API_KEY`
-   - `GOOGLE_API_KEY`
+   - `FLASK_SECRET_KEY` - Random secret key for session management
+   - `OPENAI_API_KEY` - Your OpenAI API key
+   - `GOOGLE_API_KEY` - Your Google Gemini API key
+   - `DATABASE_URL` - PostgreSQL connection string (auto-set by Render)
+   - `SMTP_HOST` - smtp.gmail.com
+   - `SMTP_PORT` - 587
+   - `SMTP_USER` - Your Gmail address
+   - `SMTP_PASSWORD` - Gmail App Password
+   - `SMTP_FROM` - Same as SMTP_USER
+   - `APP_URL` - https://smartbudget-assistant.onrender.com
+
+> **Important:** Review [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) before deploying to production
 
 4. **Deploy!** Render will automatically deploy your app
 
@@ -246,11 +313,34 @@ python test_chat_api.py
 }
 ```
 
+**POST /verify-otp**
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
 **POST /login**
 ```json
 {
   "email": "user@example.com",
   "password": "secure_password"
+}
+```
+
+**POST /forgot-password**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**POST /reset-password**
+```json
+{
+  "token": "reset-token-from-email",
+  "new_password": "new_secure_password"
 }
 ```
 
@@ -315,7 +405,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Author
 
-Your Name - [GitHub Profile](https://github.com/yourusername)
+**Muhammad Fathul Hakim**
+- GitHub: [@mfathul21](https://github.com/mfathul21)
+- Project: [SmartBudget-Assistant](https://github.com/mfathul21/SmartBudget-Assistant)
+- Live Demo: [https://smartbudget-assistant.onrender.com](https://smartbudget-assistant.onrender.com)
 
 ## 🙏 Acknowledgments
 
@@ -326,7 +419,12 @@ Your Name - [GitHub Profile](https://github.com/yourusername)
 
 ## 📧 Support
 
-For support, email your-email@example.com or open an issue on GitHub.
+For support, open an issue on [GitHub Issues](https://github.com/mfathul21/SmartBudget-Assistant/issues)
+
+## 📚 Additional Documentation
+
+- [EMAIL_SETUP.md](EMAIL_SETUP.md) - Gmail SMTP configuration guide
+- [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) - Pre-deployment security checklist
 
 ---
 
