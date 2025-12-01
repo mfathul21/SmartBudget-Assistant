@@ -19,4 +19,5 @@ python init_admin.py || echo "⚠️ Admin user already exists or failed to crea
 
 # Start Flask server with Gunicorn (production-ready)
 echo "✅ Starting Flask server with Gunicorn..."
-exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile - --chdir /opt/render/project/src/backend main:app
+cd /opt/render/project/src
+exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile - wsgi:app
