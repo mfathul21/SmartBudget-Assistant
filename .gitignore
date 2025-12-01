@@ -40,3 +40,7 @@ Thumbs.db
 
 # Render
 .render/
+
+# Documentation
+*.md
+!README.md
