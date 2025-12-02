@@ -108,11 +108,13 @@ client = OpenAI()
 @app.route("/api/health", methods=["GET"])
 def health_check():
     """Simple health check endpoint for uptime monitoring"""
-    return jsonify({
-        "status": "ok",
-        "service": "SmartBudget-Assistant",
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }), 200
+    return jsonify(
+        {
+            "status": "ok",
+            "service": "SmartBudget-Assistant",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    ), 200
 
 
 # === Public Config Endpoint (safe values only) ===
@@ -257,7 +259,10 @@ def send_password_reset_email(
     """Send password reset email. Returns True if email was sent, False if dev mode."""
     # Check if SMTP is configured
     if not all([SMTP_HOST, SMTP_USER, SMTP_PASSWORD]):
+        print(f"[EMAIL] Dev mode - SMTP not configured. Host:{SMTP_HOST}, User:{SMTP_USER}, Pass:{'*' * len(SMTP_PASSWORD) if SMTP_PASSWORD else 'None'}")
         return False  # Dev mode: no email sent
+    
+    print(f"[EMAIL] Sending reset email to {to_email}...")
 
     try:
         import smtplib
@@ -403,6 +408,7 @@ Email otomatis - Jangan balas email ini
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_FROM, to_email, msg.as_string())
 
+        print(f"[EMAIL] ✅ Reset email sent successfully to {to_email}")
         return True
     except Exception as e:
         print(f"[EMAIL ERROR] Failed to send reset email: {e}")
