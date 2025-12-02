@@ -163,11 +163,11 @@ def verify_recaptcha_token(token: str, remote_ip: str = None) -> bool:
 
 
 # --- Email Utilities ---
-def send_otp_email(to_email: str, otp_code: str, user_name: str) -> None:
-    """Send OTP verification email"""
+def send_otp_email(to_email: str, otp_code: str, user_name: str) -> bool:
+    """Send OTP verification email. Returns True if sent, False if dev/no SMTP or error."""
     if not all([SMTP_HOST, SMTP_USER, SMTP_PASSWORD]):
         print(f"[DEV MODE] OTP for {to_email}: {otp_code}")
-        return
+        return False
 
     try:
         import smtplib
@@ -250,9 +250,11 @@ Jika Anda tidak mendaftar, abaikan email ini.
             server.sendmail(SMTP_FROM, to_email, msg.as_string())
 
         print(f"[EMAIL] OTP sent to {to_email}")
+        return True
     except Exception as e:
         print(f"[EMAIL ERROR] Failed to send OTP: {e}")
         print(f"[DEV MODE FALLBACK] OTP for {to_email}: {otp_code}")
+        return False
 
 
 def send_password_reset_email(
@@ -634,9 +636,14 @@ def register_send_otp():
     db.commit()
 
     # Send OTP email
-    send_otp_email(email, otp_code, name)
+    email_sent = send_otp_email(email, otp_code, name)
 
-    return jsonify({"status": "ok", "message": "OTP sent to your email"}), 200
+    resp = {"status": "ok", "message": "OTP sent to your email"}
+    if not email_sent:
+        # Dev mode: expose OTP to client to allow testing without SMTP
+        resp["dev_mode"] = True
+        resp["otp"] = otp_code
+    return jsonify(resp), 200
 
 
 @app.route("/api/register/verify-otp", methods=["POST"])

@@ -1673,13 +1673,21 @@
                 if (response.ok) {
                     // Store registration data temporarily
                     tempRegData = { name, email, password };
-                    
+
                     // Show OTP modal
                     document.getElementById('otp-email').textContent = email;
                     document.getElementById('otp-code').value = '';
                     document.getElementById('otp-modal').classList.add('active');
                     document.body.style.overflow = 'hidden';
-                    
+
+                    // If backend is in dev mode, show OTP hint and prefill
+                    if (data.dev_mode && data.otp) {
+                        showOtpMessage((translations[currentLanguage]?.devModeNotice || 'Mode Pengujian:') + ' OTP: ' + data.otp, 'success');
+                        document.getElementById('otp-code').value = data.otp;
+                    } else {
+                        showOtpMessage('', '');
+                    }
+
                     showMessage(''); // Clear message
                 } else {
                     showMessage(data.error || translations[currentLanguage].registrationFailed, 'error');
