@@ -9,20 +9,30 @@ on:
 jobs:
   ping-service:
     runs-on: ubuntu-latest
-    
+
     steps:
+      - name: Resolve target URL
+        id: vars
+        run: |
+          if [ -n "${{ secrets.APP_URL }}" ]; then
+            echo "url=${{ secrets.APP_URL }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://smartbudget-assistant.onrender.com" >> $GITHUB_OUTPUT
+          fi
+
       - name: Ping Health Endpoint
         run: |
-          echo "🔄 Pinging SmartBudget-Assistant service..."
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://smartbudget-assistant.onrender.com/health)
-          
+          TARGET="${{ steps.vars.outputs.url }}"
+          echo "🔄 Pinging: ${TARGET}/health"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "${TARGET}/health")
+
           if [ "$RESPONSE" -eq 200 ]; then
             echo "✅ Service is healthy (HTTP $RESPONSE)"
           else
             echo "⚠️ Service returned HTTP $RESPONSE"
             exit 1
           fi
-      
+
       - name: Log Timestamp
         if: success()
         run: |
