@@ -355,8 +355,8 @@ def send_password_reset_email(
                         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 35px 0;">
                           <tr>
                             <td align="center">
-                              <a href="{reset_url}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);">
-                                Reset Password Sekarang
+                              <a href="{reset_url}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #2563eb; background-image: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none !important; padding: 14px 32px; border-radius: 8px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3); mso-line-height-rule: exactly;">
+                                &#128274; Reset Password Sekarang
                               </a>
                             </td>
                           </tr>
@@ -366,7 +366,7 @@ def send_password_reset_email(
                           Atau salin dan tempel tautan berikut ke browser Anda:
                         </p>
                         <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 16px; word-break: break-all;">
-                          <a href="{reset_url}" style="color: #2563eb; font-size: 13px; text-decoration: none;">
+                          <a href="{reset_url}" target="_blank" rel="noopener noreferrer" style="color: #2563eb !important; font-size: 13px; text-decoration: underline;">
                             {reset_url}
                           </a>
                         </div>
