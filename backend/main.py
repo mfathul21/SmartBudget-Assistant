@@ -38,6 +38,8 @@ MESSAGES = {
     "id": {
         "email_required": "Email harus diisi",
         "email_not_registered": "Email tidak terdaftar",
+        "incorrect_password": "Password salah",
+        "email_password_required": "Email dan password harus diisi",
         "reset_link_sent": "Jika email terdaftar, link reset telah dikirim.",
         "token_password_required": "Token dan password baru wajib diisi",
         "password_min_length": "Password minimal 6 karakter",
@@ -49,6 +51,8 @@ MESSAGES = {
     "en": {
         "email_required": "Email is required",
         "email_not_registered": "Email is not registered",
+        "incorrect_password": "Incorrect password",
+        "email_password_required": "Email and password are required",
         "reset_link_sent": "If email is registered, reset link has been sent.",
         "token_password_required": "Token and new password are required",
         "password_min_length": "Password must be at least 6 characters",
@@ -717,6 +721,7 @@ def login_api():
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
     remember = bool(data.get("remember"))
+    lang = get_language()
 
     # Skip reCAPTCHA verification for now (keys may be invalid)
     # TODO: Get valid reCAPTCHA v3 keys from https://www.google.com/recaptcha/admin
@@ -729,7 +734,7 @@ def login_api():
     #         return jsonify({"error": "Captcha verification failed"}), 400
 
     if not email or not password:
-        return jsonify({"error": "Email and password required"}), 400
+        return jsonify({"error": get_message("email_password_required", lang)}), 400
 
     cur = db.execute(
         "SELECT id, name, email, password_hash, role FROM users WHERE email = ?",
@@ -737,8 +742,13 @@ def login_api():
     )
     user = cur.fetchone()
 
-    if not user or not check_password_hash(user["password_hash"], password):
-        return jsonify({"error": "Invalid email or password"}), 401
+    # Check if email exists
+    if not user:
+        return jsonify({"error": get_message("email_not_registered", lang)}), 404
+    
+    # Check if password is correct
+    if not check_password_hash(user["password_hash"], password):
+        return jsonify({"error": get_message("incorrect_password", lang)}), 401
 
     token = secrets.token_urlsafe(32)
     # expiry (WIB): 30 days if remember, else 7 days
