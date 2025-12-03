@@ -877,17 +877,62 @@ def password_forgot_api():
 
     # Only return success if email was actually sent
     if email_sent:
-        response_data = {"status": "ok", "message": get_message("reset_link_sent", lang)}
+        response_data = {
+            "status": "ok",
+            "message": get_message("reset_link_sent", lang),
+        }
         return jsonify(response_data), 200
-    
+
     # If email not sent (dev mode or email error), include reset URL for testing
     response_data = {
-        "status": "ok", 
+        "status": "ok",
         "message": "Reset link created. Check server logs for the link (dev mode).",
         "reset_url": f"/reset-password.html?token={token}",
-        "dev_mode": True
+        "dev_mode": True,
     }
     return jsonify(response_data), 200
+
+
+@app.route("/api/password/verify-token", methods=["GET"])
+def verify_reset_token_api():
+    """Verify reset token and return user email for password manager."""
+    db = get_db()
+    token = request.args.get("token", "").strip()
+    lang = get_language()
+
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    cur = db.execute(
+        """SELECT pr.expires_at, u.email 
+           FROM password_resets pr 
+           JOIN users u ON pr.user_id = u.id 
+           WHERE pr.token = ?""",
+        (token,),
+    )
+    row = cur.fetchone()
+    
+    if not row:
+        return jsonify({"error": get_message("invalid_token", lang), "valid": False}), 404
+
+    # Check expiry
+    expires_at = row["expires_at"]
+    try:
+        if isinstance(expires_at, datetime):
+            exp_dt = expires_at
+        else:
+            try:
+                exp_dt = datetime.fromisoformat(expires_at.replace("Z", ""))
+            except ValueError:
+                exp_dt = datetime.strptime(expires_at, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return jsonify({"error": get_message("invalid_token", lang), "valid": False}), 400
+
+    wib_now = datetime.now(timezone(timedelta(hours=7))).replace(tzinfo=None)
+    if exp_dt < wib_now:
+        return jsonify({"error": get_message("token_expired", lang), "valid": False}), 400
+
+    return jsonify({"valid": True, "email": row["email"]}), 200
 
 
 @app.route("/api/password/reset", methods=["POST"])
