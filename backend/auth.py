@@ -13,21 +13,15 @@ def get_current_user():
     # Support multiple token sources: Authorization header (Bearer), X-Session-Token, or cookie
     token = None
     auth_header = request.headers.get("Authorization")
-    print(f"[AUTH DEBUG] Authorization header: {auth_header}")
+    # Removed: Debug logging of auth header to prevent token exposure
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
-        print(f"[AUTH DEBUG] Token from Bearer: {token[:20]}...")
     if not token:
         token = request.headers.get("X-Session-Token")
-        if token:
-            print(f"[AUTH DEBUG] Token from X-Session-Token: {token[:20]}...")
     if not token:
         token = request.cookies.get("session_token")
-        if token:
-            print(f"[AUTH DEBUG] Token from cookie: {token[:20]}...")
 
     if not token:
-        print("[AUTH DEBUG] No token found in any source!")
         return None
 
     # Database query

@@ -22,6 +22,7 @@ backend/archive/
 backend/notebook.ipynb
 backend/server.log
 *.log
+test_*.py
 
 # Uploads
 public/uploads/avatars/*

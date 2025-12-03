@@ -104,6 +104,24 @@ from memory import (
 from memory import SUMMARY_THRESHOLD, MAX_LOG_CONTEXT, MAX_LOG_SOURCE
 from embeddings import ensure_log_embeddings, semantic_search
 
+
+# === SECURITY: SANITIZE LOGGING ===
+def sanitize_for_logging(data: dict) -> dict:
+    """Sanitize sensitive data for logging by masking passwords and tokens"""
+    if not isinstance(data, dict):
+        return data
+    
+    sanitized = data.copy()
+    sensitive_keys = ['password', 'token', 'api_key', 'secret', 'otp', 'pin']
+    
+    for key in sanitized:
+        # Check if key contains sensitive information
+        if any(sensitive in key.lower() for sensitive in sensitive_keys):
+            if sanitized[key]:
+                sanitized[key] = '***REDACTED***'
+    
+    return sanitized
+
 # Initialize Flask app
 app = Flask(
     __name__,
@@ -1933,7 +1951,7 @@ def chat_api():
 
                     print(f"\n{'=' * 60}")
                     print(f"[DEBUG] Tool Call: {fn_name}")
-                    print(f"[DEBUG] Arguments: {fn_args}")
+                    print(f"[DEBUG] Arguments: {sanitize_for_logging(fn_args)}")
                     print(f"{'=' * 60}\n")
 
                     result = execute_action(user_id, fn_name, fn_args)
@@ -2113,7 +2131,7 @@ Action tersedia:
 
                     print(f"\n{'=' * 60}")
                     print(f"[DEBUG] GEMINI Tool Call: {action}")
-                    print(f"[DEBUG] GEMINI Arguments: {data_obj}")
+                    print(f"[DEBUG] GEMINI Arguments: {sanitize_for_logging(data_obj)}")
                     print(f"{'=' * 60}\n")
 
                     res = execute_action(user_id, action, data_obj)
