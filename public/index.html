@@ -243,7 +243,7 @@
                 </div>
 
                 <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-                  <button type="button" id="btn-clear-tx" style="background:#e5e7eb; color:#4b5563;" data-i18n="clearButton"><i class="fas fa-eraser"></i> Bersihkan</button>
+                  <button type="button" id="btn-clear-tx" style="background:var(--bg-tertiary); color:var(--text-secondary);" data-i18n="clearButton"><i class="fas fa-eraser"></i> Bersihkan</button>
                   <button type="submit" id="btn-save" data-i18n="saveTransactionButton"><i class="fas fa-save"></i> Simpan Transaksi</button>
                 </div>
                 <div id="tx-msg" class="small" style="margin-top:8px;"></div>
@@ -317,7 +317,7 @@
           <div id="history-tx" class="sub-tab-content">
             <h2 data-i18n="transactionHistoryTitle"><i class="fas fa-history"></i> Riwayat Transaksi</h2>
             
-            <div id="history-filters" style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+            <div id="history-filters" style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
               <div>
                 <label for="filter-start-date" data-i18n="startDateLabel">Dari Tanggal</label>
                 <input type="date" id="filter-start-date">
@@ -341,7 +341,7 @@
               </div>
               <div style="align-self: end; display: flex; gap: 8px;">
                 <button type="button" id="btn-apply-filter" style="width: 100%;" data-i18n="applyFilterButton"><i class="fas fa-filter"></i> Terapkan</button>
-                <button type="button" id="btn-reset-filter" style="width: 100%; background: #e5e7eb; color: #4b5563;" data-i18n="resetFilterButton"><i class="fas fa-times"></i> Reset</button>
+                <button type="button" id="btn-reset-filter" style="width: 100%; background: var(--bg-tertiary); color: var(--text-secondary);" data-i18n="resetFilterButton"><i class="fas fa-times"></i> Reset</button>
               </div>
             </div>
 
@@ -375,8 +375,8 @@
 
           <!-- SUB-TAB: ACTIVE GOALS -->
           <div id="active-goals" class="sub-tab-content active">
-            <div style="background: #dbeafe; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #2563eb;">
-              <p style="font-size: 13px; margin: 0; color: #1e40af;">
+            <div style="background: rgba(37, 99, 235, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #2563eb;">
+              <p style="font-size: 13px; margin: 0; color: #3b82f6;">
                 <i class="fas fa-lightbulb"></i>
                 <span data-i18n="savingsGoalInfo">Kelola target tabungan Anda dan lacak progress secara real-time</span>
               </p>
@@ -399,10 +399,10 @@
             </div>
 
             <!-- Filter & Sort -->
-            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
               <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Urutkan</label>
-                <select id="sort-goals" style="width: 100%; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Urutkan</label>
+                <select id="sort-goals" style="width: 100%; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: var(--input-bg); color: var(--text-primary);">
                   <option value="progress-asc">Progress: Terendah dulu</option>
                   <option value="progress-desc">Progress: Tertinggi dulu</option>
                   <option value="deadline-asc">Deadline: Terdekat dulu</option>
@@ -411,8 +411,8 @@
                 </select>
               </div>
               <div style="flex: 1; min-width: 150px;">
-                <label style="font-size: 12px; color: #6b7280; display: block; margin-bottom: 4px;">Cari Target</label>
-                <input type="text" id="search-goals" placeholder="Ketik nama target..." style="width: 100%; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;" />
+                <label style="font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Cari Target</label>
+                <input type="text" id="search-goals" placeholder="Ketik nama target..." style="width: 100%; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: var(--input-bg); color: var(--text-primary);" />
               </div>
               <div style="align-self: flex-end;">
                 <button type="button" onclick="applySavingsFilter()" style="padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
@@ -432,7 +432,7 @@
                 <h2 data-i18n="addGoalTitle" style="margin:0;">
                   <i class="fas fa-plus-circle"></i> Tambah Target Tabungan
                 </h2>
-                <div class="small" style="color:#6b7280;">
+                <div class="small" style="color:var(--text-secondary);">
                   <i class="fas fa-lightbulb"></i>
                   <span data-i18n="goalHint">Tips: Tetapkan target realistis dan deadline yang jelas.</span>
                 </div>
@@ -466,7 +466,7 @@
                   </div>
                 </div>
                 <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-                  <button type="button" onclick="clearGoalForm()" style="background:#e5e7eb; color:#4b5563;" data-i18n="clearButton">
+                  <button type="button" onclick="clearGoalForm()" style="background:var(--bg-tertiary); color:var(--text-secondary);" data-i18n="clearButton">
                     <i class="fas fa-eraser"></i> Bersihkan
                   </button>
                   <button type="submit" id="btn-add-goal" data-i18n="addGoalButton">
@@ -480,8 +480,8 @@
 
           <!-- SUB-TAB: COMPLETED GOALS -->
           <div id="completed-goals" class="sub-tab-content">
-            <div style="background: #d1fae5; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #10b981;">
-              <p style="font-size: 13px; margin: 0; color: #047857;">
+            <div style="background: rgba(16, 185, 129, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #10b981;">
+              <p style="font-size: 13px; margin: 0; color: #10b981;">
                 <i class="fas fa-trophy"></i>
                 <span>Selamat! Ini adalah pencapaian target tabungan Anda.</span>
               </p>
@@ -495,21 +495,25 @@
       <div id="advisor" class="tab-content">
         <div class="card" style="padding: 0; overflow: hidden;">
           <div style="position: relative;">
-            <button id="collapse-sidebar-btn" title="Toggle sidebar" style="position: absolute; top: 16px; left: 16px; z-index: 10; width: 36px; height: 36px; padding: 0; justify-content: center; background: rgba(255, 255, 255, 0.9); color: #4b5563; border: 1.5px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 8px; backdrop-filter: blur(4px); transition: all 0.3s ease;"><i class="fas fa-chevron-left"></i></button>
+            <button id="collapse-sidebar-btn" title="Toggle sidebar" style="position: absolute; top: 16px; left: 16px; z-index: 10; width: 36px; height: 36px; padding: 0; justify-content: center; background: var(--card-bg); color: var(--text-secondary); border: 1.5px solid var(--border-color); box-shadow: var(--shadow-sm); border-radius: 8px; backdrop-filter: blur(4px); transition: all 0.3s ease;"><i class="fas fa-chevron-left"></i></button>
             <button id="new-chat-collapsed-btn" title="New chat" style="position: absolute; top: 64px; left: 16px; z-index: 10; width: 36px; height: 36px; padding: 0; justify-content: center; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); border-radius: 8px; display: none; transition: all 0.3s ease;"><i class="fas fa-plus"></i></button>
             <div class="advisor-layout">
               <div id="chat-sidebar">
                 <div id="sidebar-main-content">
                   <button id="new-chat-btn" data-i18n="newChatButton" style="margin-top: 64px;"><i class="fas fa-plus"></i> Obrolan Baru</button>
-                  <h3 data-i18n="chatHistoryHeader" style="font-size: 13px; color: #6b7280; margin: 16px 0 8px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Riwayat Obrolan</h3>
+                  <h3 data-i18n="chatHistoryHeader" style="font-size: 13px; color: var(--text-secondary); margin: 16px 0 8px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Riwayat Obrolan</h3>
                   <div id="chat-session-list"></div>
                 </div>
                 <div id="sidebar-footer">
-                  <!-- Model selector in sidebar -->
+                  <div style="padding: 12px; border-top: 1px solid var(--border-color); background: var(--bg-tertiary);">
+                    <p style="margin: 0; font-size: 10px; color: var(--text-tertiary); text-align: center; line-height: 1.4;" data-i18n="aiDisclaimer">
+                      <i class="fas fa-info-circle"></i> AI dapat membuat kesalahan. Verifikasi informasi penting.
+                    </p>
+                  </div>
                 </div>
               </div>
               <div id="sidebar-resizer"></div>
-              <div id="chat-main" style="overflow: hidden; display: flex; flex-direction: column; background: linear-gradient(180deg, #fafbfc 0%, #ffffff 100%);">
+              <div id="chat-main" style="overflow: hidden; display: flex; flex-direction: column; background: var(--bg-secondary);">
                 <div id="chat-welcome-screen" class="chat-welcome-modern">
                   <div class="welcome-icon-container">
                     <div class="welcome-icon-bg"></div>
@@ -543,30 +547,23 @@
                   <span>AI sedang mengetik...</span>
                 </div>
                 <form id="chat-form" class="chat-input-container">
-                  <div class="chat-input-header">
-                    <div class="model-selector-compact">
-                      <i class="fas fa-brain" style="font-size: 11px; color: #9ca3af;"></i>
-                      <select id="model-provider" style="padding: 2px 6px; font-size: 11px; border: none; background: transparent; color: #6b7280;">
-                        <option value="google">Gemini 2.5 Flash</option>
-                        <option value="openai">GPT-4o mini</option>
-                      </select>
-                    </div>
-                  </div>
                   <div class="chat-input-wrapper">
                     <button type="button" id="btn-clear-chat" class="input-action-btn" title="Clear chat">
                       <i class="fas fa-trash-alt"></i>
                     </button>
                     <textarea id="chat-input" rows="1" placeholder="Ketik pesan Anda..." data-i18n-placeholder="chatPlaceholder"></textarea>
+                    <div class="model-selector-inline">
+                      <i class="fas fa-brain" style="font-size: 11px; color: var(--text-tertiary);"></i>
+                      <select id="model-provider" style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-tertiary); color: var(--text-secondary);">
+                        <option value="google">Gemini 2.5 Flash</option>
+                        <option value="openai">GPT-4o mini</option>
+                      </select>
+                    </div>
                     <button type="submit" id="btn-chat" class="input-submit-btn" title="Send message">
                       <i class="fas fa-paper-plane"></i>
                     </button>
                   </div>
-                  <div class="chat-input-footer">
-                    <p class="small" style="margin: 0; font-size: 10px;" data-i18n="aiDisclaimer">
-                      AI dapat membuat kesalahan. Verifikasi informasi penting.
-                    </p>
-                  </div>
-                  <div id="chat-msg" class="small" style="margin-top: 4px;"></div>
+                  <div id="chat-msg" class="small" style="margin-top: 8px;"></div>
                 </form>
               </div>
             </div>

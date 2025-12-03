@@ -8,16 +8,291 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
-        /* Gaya khusus untuk halaman pengaturan (tanpa override header/lang switch) */
-        .setting-item {
-            padding-top: 1.5rem;
-            margin-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
+        /* Modern Settings Page Design */
+        .settings-container {
+            max-width: 900px;
+            margin: 2rem auto;
         }
-        .setting-item:first-child {
-            padding-top: 0;
-            margin-top: 0;
-            border-top: none;
+        
+        .settings-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .settings-header::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .settings-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .settings-header p {
+            margin: 0;
+            opacity: 0.95;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .settings-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .setting-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+        
+        .setting-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        
+        .setting-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .setting-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .setting-icon.language {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .setting-icon.theme {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        
+        .setting-icon.security {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .setting-info h2 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .setting-info p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        .setting-content {
+            padding-top: 0.5rem;
+        }
+        
+        /* Language & Theme Buttons */
+        .option-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .option-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.85rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .option-button:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .option-button.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            font-weight: 600;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .option-button i {
+            font-size: 16px;
+        }
+        
+        /* Timeout Slider */
+        .timeout-control {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .timeout-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .timeout-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .timeout-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .slider-container {
+            position: relative;
+        }
+        
+        .timeout-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border-color);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        .timeout-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s ease;
+        }
+        
+        .timeout-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+        
+        .timeout-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: all 0.2s ease;
+        }
+        
+        .timeout-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+        
+        .timeout-options {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 0.5rem;
+        }
+        
+        .save-button {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .save-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .save-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .success-message {
+            display: none;
+            padding: 0.75rem 1rem;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -41,132 +316,246 @@
     </header>
 
     <main class="container">
-        <div class="card" style="max-width: 600px; margin: 2rem auto;">
-            <h1 class="card-title"><i class="fas fa-cog" style="color:#2563eb;"></i> <span data-i18n="settingsTitle">Pengaturan</span></h1>
-            
-            <div class="setting-item">
-                <h2 class="card-subtitle" style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #1f2937;" data-i18n="languageTitle">Bahasa</h2>
-                <p data-i18n="languageDesc">Pilih bahasa antarmuka aplikasi.</p>
-                <div class="lang-switcher">
-                    <button id="lang-id" class="lang-button">ID</button>
-                    <button id="lang-en" class="lang-button">EN</button>
-                </div>
+        <div class="settings-container">
+            <!-- Settings Header -->
+            <div class="settings-header">
+                <h1><i class="fas fa-cog"></i> <span data-i18n="settingsTitle">Pengaturan</span></h1>
+                <p data-i18n="settingsDesc">Sesuaikan preferensi dan pengaturan aplikasi Anda</p>
             </div>
 
-            <!-- Delete Account Section -->
-            <div class="setting-item" style="border-top: 2px solid #dc3545; padding-top: 1.5rem; margin-top: 2rem;">
-                <h2 class="card-subtitle" style="font-size: 1.2rem; margin-bottom: 0.5rem; color: #dc3545;" data-i18n="deleteAccountTitle">Hapus Akun</h2>
-                <p style="color: #dc3545; margin-bottom: 1rem;" data-i18n="deleteAccountDesc">
-                    ⚠️ Tindakan ini tidak dapat dibatalkan. Semua data Anda akan dihapus secara permanen.
-                </p>
-                <button id="deleteAccountBtn" class="btn" style="background-color: #dc3545; color: white; border: none; padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 8px; font-weight: 500;">
-                    <i class="fas fa-trash"></i> <span data-i18n="deleteAccountBtn">Hapus Akun Saya</span>
-                </button>
+            <div class="settings-grid">
+                <!-- Language Setting -->
+                <div class="setting-card">
+                    <div class="setting-header">
+                        <div class="setting-icon language">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <div class="setting-info">
+                            <h2 data-i18n="languageTitle">Bahasa</h2>
+                            <p data-i18n="languageDesc">Pilih bahasa antarmuka aplikasi</p>
+                        </div>
+                    </div>
+                    <div class="setting-content">
+                        <div class="option-buttons">
+                            <button id="lang-id-card" class="option-button lang-button" data-lang="id">
+                                <i class="fas fa-flag"></i>
+                                <span>Indonesia</span>
+                            </button>
+                            <button id="lang-en-card" class="option-button lang-button" data-lang="en">
+                                <i class="fas fa-flag-usa"></i>
+                                <span>English</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme Setting -->
+                <div class="setting-card">
+                    <div class="setting-header">
+                        <div class="setting-icon theme">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div class="setting-info">
+                            <h2 data-i18n="themeTitle">Tema</h2>
+                            <p data-i18n="themeDesc">Pilih tema tampilan aplikasi</p>
+                        </div>
+                    </div>
+                    <div class="setting-content">
+                        <div class="option-buttons">
+                            <button id="theme-light" class="option-button theme-button">
+                                <i class="fas fa-sun" style="color: #f59e0b;"></i>
+                                <span data-i18n="themeLight">Terang</span>
+                            </button>
+                            <button id="theme-dark" class="option-button theme-button">
+                                <i class="fas fa-moon" style="color: #6366f1;"></i>
+                                <span data-i18n="themeDark">Gelap</span>
+                            </button>
+                            <button id="theme-auto" class="option-button theme-button">
+                                <i class="fas fa-circle-half-stroke" style="color: #8b5cf6;"></i>
+                                <span data-i18n="themeAuto">Otomatis</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto-logout Timer Setting -->
+                <div class="setting-card">
+                    <div class="setting-header">
+                        <div class="setting-icon security">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="setting-info">
+                            <h2 data-i18n="autoLogoutTitle">Auto-Logout Timer</h2>
+                            <p data-i18n="autoLogoutDesc">Otomatis logout setelah tidak aktif untuk meningkatkan keamanan</p>
+                        </div>
+                    </div>
+                    <div class="setting-content">
+                        <div class="timeout-control">
+                            <div class="timeout-display">
+                                <div>
+                                    <div class="timeout-value" id="timeout-display">15</div>
+                                    <div class="timeout-label" data-i18n="minutesLabel">menit</div>
+                                </div>
+                                <i class="fas fa-clock" style="font-size: 2rem; color: var(--text-tertiary);"></i>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="timeout-slider" class="timeout-slider" 
+                                       min="5" max="60" step="5" value="15">
+                                <div class="timeout-options">
+                                    <span>5 min</span>
+                                    <span>15 min</span>
+                                    <span>30 min</span>
+                                    <span>45 min</span>
+                                    <span>60 min</span>
+                                </div>
+                            </div>
+                            <button id="save-timeout" class="save-button">
+                                <i class="fas fa-save"></i>
+                                <span data-i18n="saveButton">Simpan Pengaturan</span>
+                            </button>
+                            <div id="timeout-success" class="success-message">
+                                <i class="fas fa-check-circle"></i>
+                                <span data-i18n="saveSuccess">Pengaturan berhasil disimpan!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Delete Account Confirmation Modal -->
-    <div id="deleteAccountModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="card" style="max-width: 500px; margin: 2rem; position: relative;">
-            <h2 class="card-title" style="color: #dc3545;" data-i18n="confirmDeleteTitle">Konfirmasi Hapus Akun</h2>
-            <p style="color: #dc3545; margin-bottom: 1.5rem;" data-i18n="confirmDeleteWarning">
-                ⚠️ Anda akan menghapus akun secara permanen. Semua transaksi, tabungan, dan data lainnya akan hilang.
-            </p>
-            <form id="deleteAccountForm">
-                <div class="form-group">
-                    <label for="confirmPassword" data-i18n="enterPasswordConfirm">Masukkan password untuk konfirmasi:</label>
-                    <input 
-                        type="password" 
-                        id="confirmPassword" 
-                        name="password"
-                        autocomplete="current-password"
-                        class="form-control"
-                        required
-                        placeholder="Password"
-                    />
-                </div>
-                <div style="margin: 1.5rem 0;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="confirmUnderstand" required style="width: auto;" />
-                        <span data-i18n="understandDelete">Saya memahami bahwa tindakan ini tidak dapat dibatalkan</span>
-                    </label>
-                </div>
-                <div id="deleteErrorMsg" style="color: #dc3545; margin-bottom: 1rem; display: none;"></div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" id="cancelDeleteBtn" class="btn" style="background-color: #6b7280; color: white;" data-i18n="cancelBtn">Batal</button>
-                    <button type="submit" class="btn" style="background-color: #dc3545; color: white;" data-i18n="confirmDeleteBtn">Hapus Akun</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="/static/app.js"></script>
     <script>
-        // Delete Account Modal Logic
-        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-        const deleteAccountModal = document.getElementById('deleteAccountModal');
-        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-        const deleteAccountForm = document.getElementById('deleteAccountForm');
-        const deleteErrorMsg = document.getElementById('deleteErrorMsg');
+        // Theme Toggle Logic
+        const themeButtons = document.querySelectorAll('.theme-button');
+        const currentTheme = localStorage.getItem('theme') || 'auto';
 
-        deleteAccountBtn.addEventListener('click', () => {
-            deleteAccountModal.style.display = 'flex';
-            document.getElementById('confirmPassword').value = '';
-            document.getElementById('confirmUnderstand').checked = false;
-            deleteErrorMsg.style.display = 'none';
-        });
-
-        cancelDeleteBtn.addEventListener('click', () => {
-            deleteAccountModal.style.display = 'none';
-        });
-
-        deleteAccountModal.addEventListener('click', (e) => {
-            if (e.target === deleteAccountModal) {
-                deleteAccountModal.style.display = 'none';
+        // Apply theme on page load
+        function applyTheme(theme) {
+            if (theme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
             }
-        });
+        }
 
-        deleteAccountForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const password = document.getElementById('confirmPassword').value;
-            const understand = document.getElementById('confirmUnderstand').checked;
-
-            if (!understand) {
-                deleteErrorMsg.textContent = 'Anda harus mencentang kotak konfirmasi';
-                deleteErrorMsg.style.display = 'block';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/account/delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Session-Token': localStorage.getItem('session_token') || ''
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({ password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Clear session and redirect to login
-                    localStorage.removeItem('session_token');
-                    alert(data.message || 'Akun Anda telah dihapus.');
-                    window.location.href = '/login.html';
+        // Update button states
+        function updateThemeButtons(selectedTheme) {
+            themeButtons.forEach(btn => {
+                const theme = btn.id.replace('theme-', '');
+                if (theme === selectedTheme) {
+                    btn.classList.add('active');
                 } else {
-                    deleteErrorMsg.textContent = data.error || 'Gagal menghapus akun';
-                    deleteErrorMsg.style.display = 'block';
+                    btn.classList.remove('active');
                 }
-            } catch (error) {
-                console.error('Delete account error:', error);
-                deleteErrorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-                deleteErrorMsg.style.display = 'block';
+            });
+        }
+
+        // Initialize theme
+        applyTheme(currentTheme);
+        updateThemeButtons(currentTheme);
+
+        // Theme button click handlers
+        document.getElementById('theme-light').addEventListener('click', () => {
+            localStorage.setItem('theme', 'light');
+            applyTheme('light');
+            updateThemeButtons('light');
+        });
+
+        document.getElementById('theme-dark').addEventListener('click', () => {
+            localStorage.setItem('theme', 'dark');
+            applyTheme('dark');
+            updateThemeButtons('dark');
+        });
+
+        document.getElementById('theme-auto').addEventListener('click', () => {
+            localStorage.setItem('theme', 'auto');
+            applyTheme('auto');
+            updateThemeButtons('auto');
+        });
+
+        // Listen for system theme changes when in auto mode
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (localStorage.getItem('theme') === 'auto') {
+                applyTheme('auto');
             }
         });
+
+        // Language switcher
+        const currentLang = localStorage.getItem('language') || 'id';
+
+        // Language button click handlers
+        document.getElementById('lang-id-card').addEventListener('click', function() {
+            setLanguage('id'); // Use app.js function
+        });
+
+        document.getElementById('lang-en-card').addEventListener('click', function() {
+            setLanguage('en'); // Use app.js function
+        });
+
+        // Auto-logout Timer Logic
+        const timeoutSlider = document.getElementById('timeout-slider');
+        const timeoutDisplay = document.getElementById('timeout-display');
+        const saveTimeoutBtn = document.getElementById('save-timeout');
+        const successMessage = document.getElementById('timeout-success');
+        
+        let logoutTimer = null;
+        let currentTimeout = parseInt(localStorage.getItem('auto_logout_minutes') || '15');
+
+        // Initialize slider
+        timeoutSlider.value = currentTimeout;
+        timeoutDisplay.textContent = currentTimeout;
+
+        // Update display when slider moves
+        timeoutSlider.addEventListener('input', function() {
+            timeoutDisplay.textContent = this.value;
+        });
+
+        // Save timeout setting
+        saveTimeoutBtn.addEventListener('click', function() {
+            const minutes = parseInt(timeoutSlider.value);
+            localStorage.setItem('auto_logout_minutes', minutes);
+            currentTimeout = minutes;
+            
+            // Show success message
+            successMessage.style.display = 'flex';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+
+            // Restart timer with new timeout
+            startLogoutTimer();
+        });
+
+        // Start logout timer
+        function startLogoutTimer() {
+            if (logoutTimer) {
+                clearTimeout(logoutTimer);
+            }
+            
+            const timeoutMs = currentTimeout * 60 * 1000; // Convert to milliseconds
+            logoutTimer = setTimeout(() => {
+                // Auto logout
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            }, timeoutMs);
+        }
+
+        // Reset timer on user activity
+        function resetLogoutTimer() {
+            startLogoutTimer();
+        }
+
+        // Listen for user activity
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        activityEvents.forEach(event => {
+            document.addEventListener(event, resetLogoutTimer, true);
+        });
+
+        // Start timer on page load
+        startLogoutTimer();
     </script>
 </body>
 </html>

@@ -871,11 +871,10 @@ def delete_account_api():
         db.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
         db.execute("DELETE FROM users WHERE id = ?", (user_id,))
         db.commit()
-        
-        return jsonify({
-            "status": "ok",
-            "message": get_message("account_deleted", lang)
-        }), 200
+
+        return jsonify(
+            {"status": "ok", "message": get_message("account_deleted", lang)}
+        ), 200
     except Exception as e:
         db.rollback()
         print(f"[ERROR] Failed to delete account for user {user_id}: {e}")

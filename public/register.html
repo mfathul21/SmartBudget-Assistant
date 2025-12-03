@@ -850,8 +850,8 @@
             </div>
         </a>
         <div class="language-switcher">
-            <button class="lang-btn active" id="lang-id" onclick="setLanguage('id')">ID</button>
-            <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn active" id="lang-id">ID</button>
+            <button class="lang-btn" id="lang-en">EN</button>
         </div>
     </header>
 
@@ -1825,6 +1825,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Apply translations using centralized translations from app.js
             setLanguage(currentLanguage);
+            
+            // Setup language switcher buttons
+            const langIdBtn = document.getElementById('lang-id');
+            const langEnBtn = document.getElementById('lang-en');
+            if (langIdBtn) langIdBtn.addEventListener('click', () => {
+                currentLanguage = 'id';
+                setLanguage('id');
+            });
+            if (langEnBtn) langEnBtn.addEventListener('click', () => {
+                currentLanguage = 'en';
+                setLanguage('en');
+            });
             
             // Initialize reCAPTCHA
             initRecaptcha();

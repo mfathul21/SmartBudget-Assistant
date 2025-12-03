@@ -71,9 +71,9 @@ function renderSavingsGoals(data) {
   
   // Render active goals
   if (activeGoals.length === 0) {
-    listDiv.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: #9ca3af; background: #f9fafb; border-radius: 8px; border: 1.5px dashed #e5e7eb;">
+    listDiv.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); background: var(--bg-tertiary); border-radius: 8px; border: 1.5px dashed var(--border-color);">
       <i class="fas fa-bullseye" style="font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
-      <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Belum ada target tabungan</p>
+      <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Belum ada target tabungan</p>
       <p style="font-size: 14px; margin: 0;">Klik "Tambah Target" untuk membuat target tabungan pertama Anda!</p>
     </div>`;
   } else {
@@ -85,9 +85,9 @@ function renderSavingsGoals(data) {
   // Render completed goals
   if (completedListDiv) {
     if (completedGoals.length === 0) {
-      completedListDiv.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: #9ca3af; background: #f9fafb; border-radius: 8px; border: 1.5px dashed #e5e7eb;">
+      completedListDiv.innerHTML = `<div style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); background: var(--bg-tertiary); border-radius: 8px; border: 1.5px dashed var(--border-color);">
         <i class="fas fa-trophy" style="font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
-        <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Belum ada target yang tercapai</p>
+        <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Belum ada target yang tercapai</p>
         <p style="font-size: 14px; margin: 0;">Terus menabung untuk mencapai target Anda!</p>
       </div>`;
     } else {
@@ -109,16 +109,16 @@ function createGoalCard(goal, isCompleted = false) {
 
   const card = document.createElement("div");
   card.style.cssText = `
-    background: ${isCompleted ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' : '#ffffff'}; 
-    border: 1.5px solid ${isCompleted ? '#10b981' : '#e5e7eb'}; 
+    background: ${isCompleted ? 'rgba(16, 185, 129, 0.15)' : 'var(--card-bg)'}; 
+    border: 1.5px solid ${isCompleted ? '#10b981' : 'var(--border-color)'}; 
     border-radius: 12px; 
     padding: 16px; 
     margin-bottom: 12px;
     transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
   `;
-  card.onmouseenter = () => card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-  card.onmouseleave = () => card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+  card.onmouseenter = () => card.style.boxShadow = 'var(--shadow-md)';
+  card.onmouseleave = () => card.style.boxShadow = 'var(--shadow-sm)';
   
   const remaining = goal.target_amount - goal.current_amount;
   const monthlyNeeded = daysLeft && daysLeft > 0 ? Math.ceil(remaining / (daysLeft / 30)) : 0;
@@ -127,10 +127,10 @@ function createGoalCard(goal, isCompleted = false) {
     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
       <div style="flex: 1;">
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: ${isCompleted ? '#047857' : '#1f2937'};">${goal.name}</h3>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: ${isCompleted ? '#10b981' : 'var(--text-primary)'};">${goal.name}</h3>
           ${isCompleted ? '<span style="background: #10b981; color: white; font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600;"><i class="fas fa-check"></i> TERCAPAI</span>' : ''}
         </div>
-        <p style="margin: 0; font-size: 13px; color: #6b7280;">${goal.description || "Tanpa deskripsi"}</p>
+        <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">${goal.description || "Tanpa deskripsi"}</p>
       </div>
       <div style="display: flex; gap: 6px;">
         <button onclick='openSavingsEditModal(${JSON.stringify(goal).replace(/'/g, "&apos;")})' class="btn-edit" style="padding: 7px 12px; font-size: 12px;" title="Edit target">
@@ -144,10 +144,10 @@ function createGoalCard(goal, isCompleted = false) {
     
     <div style="margin-bottom: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
-        <span style="color: #374151;"><strong>${window.formatCurrency(goal.current_amount)}</strong> dari ${window.formatCurrency(goal.target_amount)}</span>
+        <span style="color: var(--text-primary);"><strong>${window.formatCurrency(goal.current_amount)}</strong> dari ${window.formatCurrency(goal.target_amount)}</span>
         <span style="color: ${isCompleted ? '#10b981' : '#667eea'}; font-weight: 700; font-size: 16px;">${goal.progress_pct}%</span>
       </div>
-      <div style="background: #e5e7eb; border-radius: 999px; height: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+      <div style="background: var(--border-color); border-radius: 999px; height: 10px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
         <div style="
           background: ${isCompleted ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'}; 
           height: 100%; 
@@ -158,20 +158,20 @@ function createGoalCard(goal, isCompleted = false) {
       </div>
     </div>
 
-    <div style="background: ${isCompleted ? 'rgba(16, 185, 129, 0.1)' : '#f9fafb'}; padding: 10px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
+    <div style="background: ${isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-tertiary)'}; padding: 10px; border-radius: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12px;">
       <div>
-        <div style="color: #6b7280; margin-bottom: 2px;"><i class="fas fa-calendar"></i> Deadline</div>
-        <div style="color: #374151; font-weight: 600;">${daysText}</div>
+        <div style="color: var(--text-secondary); margin-bottom: 2px;"><i class="fas fa-calendar"></i> Deadline</div>
+        <div style="color: var(--text-primary); font-weight: 600;">${daysText}</div>
       </div>
       ${!isCompleted && remaining > 0 ? `
       <div>
-        <div style="color: #6b7280; margin-bottom: 2px;"><i class="fas fa-coins"></i> Perlu per bulan</div>
-        <div style="color: #374151; font-weight: 600;">${monthlyNeeded > 0 ? window.formatCurrency(monthlyNeeded) : '-'}</div>
+        <div style="color: var(--text-secondary); margin-bottom: 2px;"><i class="fas fa-coins"></i> Perlu per bulan</div>
+        <div style="color: var(--text-primary); font-weight: 600;">${monthlyNeeded > 0 ? window.formatCurrency(monthlyNeeded) : '-'}</div>
       </div>
       ` : `
       <div>
-        <div style="color: #047857; margin-bottom: 2px;"><i class="fas fa-trophy"></i> Status</div>
-        <div style="color: #047857; font-weight: 600;">Target Tercapai!</div>
+        <div style="color: #10b981; margin-bottom: 2px;"><i class="fas fa-trophy"></i> Status</div>
+        <div style="color: #10b981; font-weight: 600;">Target Tercapai!</div>
       </div>
       `}
     </div>

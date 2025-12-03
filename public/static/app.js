@@ -1,3 +1,35 @@
+// ============================================
+//   THEME MANAGEMENT
+// ============================================
+
+// Initialize theme on page load (before DOMContentLoaded)
+(function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'auto';
+  
+  function applyTheme(theme) {
+    if (theme === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }
+  
+  // Apply immediately to prevent flash
+  applyTheme(savedTheme);
+  
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (localStorage.getItem('theme') === 'auto') {
+      applyTheme('auto');
+    }
+  });
+})();
+
+// ============================================
+//   UTILITY FUNCTIONS
+// ============================================
+
 // Utility: format numbers as Indonesian Rupiah strings
 function formatCurrency(num) {
   if (num === null || num === undefined) return "Rp 0";
@@ -414,8 +446,19 @@ const translations = {
     savePassword: "Simpan Password",
     // Settings page
     settingsTitle: "Pengaturan",
+    settingsDesc: "Sesuaikan preferensi dan pengaturan aplikasi Anda",
     languageTitle: "Bahasa",
-    languageDesc: "Pilih bahasa antarmuka aplikasi.",
+    languageDesc: "Pilih bahasa antarmuka aplikasi",
+    themeTitle: "Tema",
+    themeDesc: "Pilih tema tampilan aplikasi",
+    themeLight: "Terang",
+    themeDark: "Gelap",
+    themeAuto: "Otomatis",
+    autoLogoutTitle: "Auto-Logout Timer",
+    autoLogoutDesc: "Otomatis logout setelah tidak aktif untuk meningkatkan keamanan",
+    minutesLabel: "menit",
+    saveButton: "Simpan Pengaturan",
+    saveSuccess: "Pengaturan berhasil disimpan!",
     deleteAccountTitle: "Hapus Akun",
     deleteAccountDesc: "⚠️ Tindakan ini tidak dapat dibatalkan. Semua data Anda akan dihapus secara permanen.",
     deleteAccountBtn: "Hapus Akun Saya",
@@ -633,8 +676,19 @@ const translations = {
     savePassword: "Save Password",
     // Settings page
     settingsTitle: "Settings",
+    settingsDesc: "Customize your preferences and application settings",
     languageTitle: "Language",
-    languageDesc: "Choose the application interface language.",
+    languageDesc: "Choose the application interface language",
+    themeTitle: "Theme",
+    themeDesc: "Choose the application display theme",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeAuto: "Auto",
+    autoLogoutTitle: "Auto-Logout Timer",
+    autoLogoutDesc: "Automatically log out after inactivity to enhance security",
+    minutesLabel: "minutes",
+    saveButton: "Save Settings",
+    saveSuccess: "Settings saved successfully!",
     deleteAccountTitle: "Delete Account",
     deleteAccountDesc: "⚠️ This action cannot be undone. All your data will be permanently deleted.",
     deleteAccountBtn: "Delete My Account",
@@ -1376,8 +1430,14 @@ function setLanguage(lang) {
 
   // Update active button (support both .lang-button and .lang-btn classes)
   document.querySelectorAll('.lang-button, .lang-btn').forEach(btn => btn.classList.remove('active'));
+  
+  // Update header buttons (ID: lang-id, lang-en)
   const langBtn = document.getElementById(`lang-${lang}`);
   if (langBtn) langBtn.classList.add('active');
+  
+  // Update settings card buttons (ID: lang-id-card, lang-en-card)
+  const langCardBtn = document.getElementById(`lang-${lang}-card`);
+  if (langCardBtn) langCardBtn.classList.add('active');
 
   // Translate all elements with data-i18n attribute
   const t = translations[lang];
@@ -1425,6 +1485,9 @@ function setLanguage(lang) {
     generateDynamicPrompts();
   }
 }
+
+// Expose setLanguage globally for use in all pages
+window.setLanguage = setLanguage;
 
 /* --- CHAT SESSION MANAGEMENT --- */
 let chatData = { sessions: [], activeSessionId: null };
