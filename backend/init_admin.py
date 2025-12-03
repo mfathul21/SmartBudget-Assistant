@@ -9,5 +9,5 @@ with app.app_context():
     init_db()
     print("\n✅ Database initialized successfully!")
     print("👤 Admin login:")
-    print("   Email: admin.fathul@smartbudget.com")
-    print("   Password: p@ssword11#")
+    print("   Email: muhammadfathul386@gmail.com")
+    print("   Password: cuwiklucu08")

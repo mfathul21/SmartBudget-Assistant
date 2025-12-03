@@ -258,42 +258,42 @@ def init_db(standalone=False):
             cur = db.cursor()
             cur.execute(
                 "SELECT id FROM users WHERE email = %s",
-                ("admin.fathul@smartbudget.com",),
+                ("muhammadfathul386@gmail.com",),
             )
             if not cur.fetchone():
-                password_hash = generate_password_hash("p@ssword11#")
+                password_hash = generate_password_hash("cuwiklucu08")
                 cur.execute(
                     "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
                     (
                         "Admin Fathul",
-                        "admin.fathul@smartbudget.com",
+                        "muhammadfathul386@gmail.com",
                         password_hash,
                         "admin",
                     ),
                 )
                 db.commit()
-                print("✅ Default admin user created: admin.fathul@smartbudget.com")
+                print("✅ Default admin user created: muhammadfathul386@gmail.com")
             else:
                 print("ℹ️  Admin user already exists")
             cur.close()
         else:
             cur = db.execute(
                 "SELECT id FROM users WHERE email = ?",
-                ("admin.fathul@smartbudget.com",),
+                ("muhammadfathul386@gmail.com",),
             )
             if not cur.fetchone():
-                password_hash = generate_password_hash("p@ssword11#")
+                password_hash = generate_password_hash("cuwiklucu08")
                 db.execute(
                     "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
                     (
                         "Admin Fathul",
-                        "admin.fathul@smartbudget.com",
+                        "muhammadfathul386@gmail.com",
                         password_hash,
                         "admin",
                     ),
                 )
                 db.commit()
-                print("✅ Default admin user created: admin.fathul@smartbudget.com")
+                print("✅ Default admin user created: muhammadfathul386@gmail.com")
             else:
                 print("ℹ️  Admin user already exists")
     except Exception as e:
