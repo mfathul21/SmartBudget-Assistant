@@ -72,11 +72,32 @@ def close_db(exc=None):
         db.close()
 
 
-def init_db():
-    """Initialize database from schema.sql"""
+def init_db(standalone=False):
+    """Initialize database from schema.sql
+    
+    Args:
+        standalone: If True, creates connection directly without Flask's g object
+    """
     from werkzeug.security import generate_password_hash
 
-    db = get_db()
+    if standalone:
+        # Direct connection without Flask's g
+        if DB_TYPE == "postgresql":
+            conn = psycopg2.connect(os.environ.get("DATABASE_URL"))
+            try:
+                cur = conn.cursor()
+                cur.execute("SET TIME ZONE 'Asia/Jakarta'")
+                conn.commit()
+                cur.close()
+            except Exception as tz_err:
+                print(f"[DB WARN] Failed to set session timezone: {tz_err}")
+            db = _PgAdapter(conn)
+        else:
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            db = conn
+    else:
+        db = get_db()
     with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
@@ -277,3 +298,7 @@ def init_db():
                 print("ℹ️  Admin user already exists")
     except Exception as e:
         print(f"[WARN] Could not create default admin user: {e}")
+    
+    # Close connection if standalone mode
+    if standalone:
+        db.close()

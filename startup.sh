@@ -10,7 +10,7 @@ export PYTHONPATH="${PYTHONPATH}:/opt/render/project/src/backend"
 # Initialize database
 echo "📦 Initializing database..."
 cd backend
-python -c "from database import init_db; init_db()"
+python -c "from database import init_db; init_db(standalone=True)"
 echo "✅ Database initialized"
 
 # Create admin user if not exists
