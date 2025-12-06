@@ -80,8 +80,11 @@ async function apiFetch(url, options = {}) {
 
   const headers = { ...options.headers };
   headers['Authorization'] = `Bearer ${token}`;
+  headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+  headers['Pragma'] = 'no-cache';
+  headers['Expires'] = '0';
 
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers, cache: 'no-store' });
 
   // Check jika unauthorized
   if (response.status === 401) {

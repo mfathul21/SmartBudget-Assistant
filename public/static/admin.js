@@ -149,6 +149,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await apiFetch('/api/admin/users');
             if (!res.ok) throw new Error('Gagal memuat data');
             users = await res.json();
+            
+            // Debug: Log raw data from API
+            console.log('Raw API response:', users);
+            console.log('First user full object:', JSON.stringify(users[0], null, 2));
+            users.forEach(u => {
+                console.log(`User ${u.id}:`, Object.keys(u));
+                console.log(`  ocr_enabled =`, u.ocr_enabled, `(type: ${typeof u.ocr_enabled})`);
+            });
+            
             filtered = users.slice();
             sortFiltered();
             renderStats();

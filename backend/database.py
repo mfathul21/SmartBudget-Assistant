@@ -269,18 +269,25 @@ def init_db(standalone=False):
             if not cur.fetchone():
                 password_hash = generate_password_hash(ADMIN_PASSWORD)
                 cur.execute(
-                    "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
+                    "INSERT INTO users (name, email, password_hash, role, ocr_enabled) VALUES (%s, %s, %s, %s, %s)",
                     (
                         ADMIN_NAME,
                         ADMIN_EMAIL,
                         password_hash,
                         "admin",
+                        True,
                     ),
                 )
                 db.commit()
-                print(f"✅ Default admin user created: {ADMIN_EMAIL}")
+                print(f"✅ Default admin user created: {ADMIN_EMAIL} (OCR enabled)")
             else:
                 print("ℹ️  Admin user already exists")
+                # Ensure existing admin has OCR enabled
+                cur.execute(
+                    "UPDATE users SET ocr_enabled = true WHERE email = %s AND role = 'admin'",
+                    (ADMIN_EMAIL,),
+                )
+                db.commit()
             cur.close()
         else:
             cur = db.execute(
@@ -290,18 +297,25 @@ def init_db(standalone=False):
             if not cur.fetchone():
                 password_hash = generate_password_hash(ADMIN_PASSWORD)
                 db.execute(
-                    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+                    "INSERT INTO users (name, email, password_hash, role, ocr_enabled) VALUES (?, ?, ?, ?, ?)",
                     (
                         ADMIN_NAME,
                         ADMIN_EMAIL,
                         password_hash,
                         "admin",
+                        True,
                     ),
                 )
                 db.commit()
-                print(f"✅ Default admin user created: {ADMIN_EMAIL}")
+                print(f"✅ Default admin user created: {ADMIN_EMAIL} (OCR enabled)")
             else:
                 print("ℹ️  Admin user already exists")
+                # Ensure existing admin has OCR enabled
+                db.execute(
+                    "UPDATE users SET ocr_enabled = 1 WHERE email = ? AND role = 'admin'",
+                    (ADMIN_EMAIL,),
+                )
+                db.commit()
     except Exception as e:
         print(f"[WARN] Could not create default admin user: {e}")
 
