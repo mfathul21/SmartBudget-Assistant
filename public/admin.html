@@ -11,186 +11,779 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script defer src="https://kit.fontawesome.com/a2e0e6ad4b.js" crossorigin="anonymous"></script>
     <style>
-        /* Minimal page-scoped tweaks to avoid global CSS bloat */
-        .admin-container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-        .admin-header-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-        .admin-stat-card { display: flex; align-items: center; gap: 12px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
-        .admin-stat-card .stat-icon { width: 40px; height: 40px; border-radius: 10px; display:flex; align-items:center; justify-content:center; color:#fff; background: linear-gradient(135deg,#667eea,#764ba2); }
-        .admin-stat-card .stat-label { font-size: 12px; color: #6b7280; }
-        .admin-stat-card .stat-value { font-size: 20px; font-weight: 700; color: #111827; }
-        .admin-toolbar { display:flex; justify-content: space-between; align-items:center; gap:12px; background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:16px; }
-        .admin-table-card { background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
-        .table-responsive { overflow:auto; }
-        .admin-table { width:100%; border-collapse: collapse; }
-        .admin-table thead th { position: sticky; top:0; background:#f9fafb; border-bottom:1px solid #e5e7eb; padding:12px; text-align:left; font-weight:600; color:#374151; }
-        .admin-table tbody td { border-top:1px solid #f3f4f6; padding:12px; font-size:14px; color:#374151; }
-        .role-badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-        .role-admin { background:#fff7ed; color:#a16207; border:1px solid #fde68a; }
-        .role-user { background:#eef2ff; color:#4f46e5; border:1px solid #c7d2fe; }
-        .table-actions { display:flex; gap:8px; }
-        .table-pagination { display:flex; justify-content:center; align-items:center; gap:12px; padding:12px; }
-        .page-btn { padding:8px 12px; border:1px solid #e5e7eb; background:#fff; border-radius:8px; cursor:pointer; }
-        .page-btn:hover { background:#f9fafb; }
-        .modal { display:none; position:fixed; inset:0; z-index:1000; }
-        .modal.active { display:block; }
-        .modal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.35); }
-        .modal-dialog { position:relative; max-width:560px; margin: 10vh auto; background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,0.2); }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid #e5e7eb; }
-        .modal-body { padding:16px; }
-        .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:14px 16px; border-top:1px solid #e5e7eb; }
-        .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-        .toast { position:fixed; bottom:20px; right:20px; background:#111827; color:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 8px 18px rgba(0,0,0,0.2); display:none; }
-        .toast.show { display:block; }
+        * { box-sizing: border-box; }
+        
+        /* === ADMIN PANEL STYLES === */
+        .admin-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 24px 16px;
+        }
+
+        /* Header */
+        .admin-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .admin-page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-page-title i {
+            font-size: 32px;
+            color: #667eea;
+        }
+
+        /* Stats Grid */
+        .admin-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff, #f9fafb);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .stat-card.stat-total .icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .stat-card.stat-admin .icon {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: white;
+        }
+
+        .stat-card.stat-user .icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        /* Toolbar */
+        .admin-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 36px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-select {
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .admin-table thead {
+            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .admin-table thead th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-table tbody td {
+            padding: 14px 16px;
+            border-top: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        .admin-table tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        .admin-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .badge-admin {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .badge-user {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .badge-ocr-yes {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .badge-ocr-no {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Actions */
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .action-btn-edit {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .action-btn-edit:hover {
+            background: #bfdbfe;
+            box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
+        }
+
+        .action-btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .action-btn-delete:hover {
+            background: #fca5a5;
+            box-shadow: 0 2px 6px rgba(153, 27, 27, 0.2);
+        }
+
+        /* Pagination */
+        .table-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        .pagination-btn {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 12px;
+            color: #374151;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-dialog {
+            position: relative;
+            max-width: 600px;
+            width: 90%;
+            margin: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #111827;
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: #374151;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        /* OCR Feature Section - Only on Edit */
+        .ocr-feature-section {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+            margin-bottom: 0;
+        }
+
+        .ocr-feature-info {
+            flex: 1;
+        }
+
+        .ocr-feature-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .ocr-feature-title i {
+            font-size: 16px;
+        }
+
+        .ocr-feature-desc {
+            font-size: 12px;
+            color: #0c4a6e;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #111827;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            z-index: 2000;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.error {
+            background: #991b1b;
+        }
+
+        .toast.success {
+            background: #065f46;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-left {
+                flex-direction: column;
+            }
+
+            .admin-table {
+                font-size: 12px;
+            }
+
+            .admin-table thead th,
+            .admin-table tbody td {
+                padding: 10px 12px;
+            }
+
+            .action-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+
+            .modal-dialog {
+                width: 95%;
+            }
+        }
     </style>
 </head>
 <body>
-            <div id="table-empty" class="table-empty" hidden>
-                <div class="empty-icon"><i class="fas fa-user-slash"></i></div>
-                <div class="empty-title">Belum ada pengguna</div>
-                <div class="empty-desc">Tambahkan pengguna baru atau ubah filter pencarian.</div>
-                <button id="empty-add" class="btn-primary">Tambah Pengguna</button>
+    <header>
+        <h1>
+            <i class="fas fa-wallet"></i>
+            <span data-i18n="appTitle">SmartBudget Assistant</span>
+        </h1>
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <div class="lang-switcher">
+                <button id="lang-id" class="lang-button">ID</button>
+                <button id="lang-en" class="lang-button">EN</button>
             </div>
-            <div id="table-loading" class="table-loading" hidden>
-                <div class="skeleton-row"></div>
-                <div class="skeleton-row"></div>
-                <div class="skeleton-row"></div>
-            </div>
-        <header>
-            <h1>
-                <i class="fas fa-wallet"></i>
-                <span data-i18n="appTitle">SmartBudget Assistant</span>
-            </h1>
-            <div style="display: flex; gap: 16px; align-items: center;">
-                <div class="lang-switcher">
-                    <button id="lang-id" class="lang-button">ID</button>
-                    <button id="lang-en" class="lang-button">EN</button>
-                </div>
-                <div id="user-menu-container"></div>
-            </div>
-        </header>
+            <div id="user-menu-container"></div>
+        </div>
+    </header>
 
     <main class="admin-container">
-        <h1 class="page-title" data-i18n="userManagement">Manajemen Pengguna</h1>
-        <div class="admin-header-grid">
-            <div class="admin-stat-card" id="stat-total-users">
-                <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="admin-page-header">
+            <h1 class="admin-page-title">
+                <i class="fas fa-users"></i>
+                <span data-i18n="userManagement">Manajemen Pengguna</span>
+            </h1>
+            <button id="add-user-btn" class="btn-primary" data-i18n="addNewUser">
+                <i class="fas fa-plus"></i>
+                Tambah Pengguna
+            </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="admin-stats-grid">
+            <div class="stat-card stat-total">
+                <div class="icon"><i class="fas fa-users"></i></div>
                 <div class="stat-content">
-                    <div class="stat-label">Total Users</div>
+                    <div class="stat-label" data-i18n="totalUsers">Total Users</div>
                     <div class="stat-value" id="statUsers">0</div>
                 </div>
             </div>
-            <div class="admin-stat-card" id="stat-admins">
-                <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="stat-card stat-admin">
+                <div class="icon"><i class="fas fa-user-shield"></i></div>
                 <div class="stat-content">
-                    <div class="stat-label">Admins</div>
+                    <div class="stat-label" data-i18n="administrators">Administrators</div>
                     <div class="stat-value" id="statAdmins">0</div>
                 </div>
             </div>
-            <div class="admin-stat-card" id="stat-users">
-                <div class="stat-icon"><i class="fas fa-user"></i></div>
+            <div class="stat-card stat-user">
+                <div class="icon"><i class="fas fa-user-check"></i></div>
                 <div class="stat-content">
-                    <div class="stat-label">Standard</div>
+                    <div class="stat-label" data-i18n="standardUsers">Standard Users</div>
                     <div class="stat-value" id="statStandard">0</div>
                 </div>
             </div>
         </div>
 
+        <!-- Toolbar -->
         <div class="admin-toolbar">
             <div class="toolbar-left">
-                <div class="input-with-icon">
+                <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="search-input" placeholder="Cari nama atau email" data-i18n-placeholder="searchPlaceholder" />
+                    <input type="text" id="search-input" placeholder="Search by name or email..." data-i18n-placeholder="searchPlaceholder" />
                 </div>
-                <select id="role-filter">
-                    <option value="" data-i18n="allRoles">Semua Role</option>
+                <select id="role-filter" class="filter-select">
+                    <option value="" data-i18n="allRoles">All Roles</option>
                     <option value="admin" data-i18n="roleAdmin">Admin</option>
                     <option value="user" data-i18n="roleUser">User</option>
                 </select>
             </div>
-            <div class="toolbar-right">
-                <button id="add-user-btn" class="btn-primary" data-i18n="addNewUser">Tambah Pengguna</button>
-            </div>
         </div>
 
-        <div class="admin-table-card">
-            <div class="table-responsive">
+        <!-- Table -->
+        <div class="table-container">
+            <div class="table-wrapper">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th data-i18n="userId">ID</th>
-                            <th data-i18n="userName">Nama</th>
-                            <th data-i18n="userEmail">Email</th>
-                            <th data-i18n="userRole">Role</th>
-                            <th data-i18n="ocrStatus">OCR</th>
-                            <th data-i18n="actions">Aksi</th>
+                            <th style="width: 60px;" data-i18n="id">ID</th>
+                            <th style="width: 250px;" data-i18n="userName">Name</th>
+                            <th style="width: 150px;" data-i18n="userRole">Role</th>
+                            <th style="width: 100px;" data-i18n="ocrStatus">OCR Access</th>
+                            <th style="width: 120px;" data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="users-tbody"></tbody>
+                    <tbody id="users-tbody">
+                        <tr id="empty-state" style="display: none;">
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                                    <div class="empty-state-title" data-i18n="noUsers">No users found</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-            <div class="table-pagination">
-                <button class="page-btn" id="prev-page">Prev</button>
-                <span id="page-info">1 / 1</span>
-                <button class="page-btn" id="next-page">Next</button>
+
+            <!-- Pagination -->
+            <div class="table-footer">
+                <button class="pagination-btn" id="prev-page" data-i18n="previous">Previous</button>
+                <span class="pagination-info" id="page-info">1 / 1</span>
+                <button class="pagination-btn" id="next-page" data-i18n="next">Next</button>
             </div>
         </div>
-
-        <!-- Modal: Add/Edit User -->
-        <div class="modal" id="user-modal" aria-hidden="true">
-            <div class="modal-backdrop" data-modal-close></div>
-            <div class="modal-dialog">
-                <div class="modal-header">
-                    <h3 id="modal-title" data-i18n="addUser">Tambah Pengguna</h3>
-                    <button class="modal-close" data-modal-close>&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-grid">
-                        <div class="input-with-icon">
-                            <i class="fas fa-user"></i>
-                            <input type="text" id="modal-name" placeholder="Nama" data-i18n-placeholder="userName" />
-                        </div>
-                        <div class="input-with-icon">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="modal-email" placeholder="Email" data-i18n-placeholder="userEmail" />
-                        </div>
-                        <div class="input-with-icon">
-                            <i class="fas fa-key"></i>
-                            <input type="password" id="modal-password" placeholder="Password" data-i18n-placeholder="passwordLabel" />
-                        </div>
-                        <div class="input-with-icon">
-                            <i class="fas fa-id-badge"></i>
-                            <select id="modal-role">
-                                <option value="user" data-i18n="roleUser">User</option>
-                                <option value="admin" data-i18n="roleAdmin">Admin</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
-                            <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <i class="fas fa-image" style="color: #3b82f6;"></i>
-                                    <span style="font-weight: 600; font-size: 14px;" data-i18n="ocrFeature">OCR Feature</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary);" data-i18n="ocrFeatureDesc">Izinkan upload gambar</div>
-                            </div>
-                            <label class="toggle-switch" style="margin: 0;">
-                                <input type="checkbox" id="modal-ocr-enabled">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" data-modal-close data-i18n="cancel">Batal</button>
-                    <button class="btn-primary" id="modal-save" data-i18n="save">Simpan</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Toast messages -->
-        <div id="toast" class="toast" aria-hidden="true"></div>
     </main>
+
+    <!-- Modal: Add/Edit User -->
+    <div class="modal" id="user-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-modal-close></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Add User</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <form id="user-form" class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="userName">Full Name</label>
+                    <input type="text" id="modal-name" class="form-input" placeholder="John Doe" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="userEmail">Email Address</label>
+                    <input type="email" id="modal-email" class="form-input" placeholder="john@example.com" required />
+                </div>
+
+                <div class="form-group" id="password-group">
+                    <label class="form-label" data-i18n="passwordLabel">Password</label>
+                    <input type="password" id="modal-password" class="form-input" placeholder="••••••••" />
+                    <small style="color: #9ca3af; font-size: 12px; margin-top: 4px; display: block;" id="password-hint">Minimum 6 characters</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" data-i18n="userRole">Role</label>
+                    <select id="modal-role" class="form-select" required>
+                        <option value="user">Standard User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+
+                <!-- OCR Feature Section - Only on EDIT mode -->
+                <div class="ocr-feature-section" id="ocr-section" style="display: none;">
+                    <div class="ocr-feature-info">
+                        <div class="ocr-feature-title">
+                            <i class="fas fa-image"></i>
+                            <span data-i18n="ocrFeature">OCR Image Analysis</span>
+                        </div>
+                        <div class="ocr-feature-desc" data-i18n="ocrFeatureDesc">Allow user to upload and analyze images</div>
+                    </div>
+                    <label class="toggle-switch" style="margin: 0;">
+                        <input type="checkbox" id="modal-ocr-enabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </form>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-modal-close data-i18n="cancel">Cancel</button>
+                <button type="button" class="btn-primary" id="modal-save" data-i18n="save">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" aria-hidden="true"></div>
 
     <script src="/static/app.js" defer></script>
     <script src="/static/admin.js" defer></script>
-  </body>
+</body>
 </html>
