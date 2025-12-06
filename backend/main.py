@@ -764,10 +764,10 @@ def register_verify_otp():
             return jsonify({"error": "OTP expired. Please request a new one"}), 400
 
         print(f"[DEBUG] Creating user account for {email}")
-        # Create user account
+        # Create user account with ocr_enabled = false by default
         db.execute(
-            "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-            (otp_record["name"], email, otp_record["password_hash"], "user"),
+            "INSERT INTO users (name, email, password_hash, role, ocr_enabled) VALUES (?, ?, ?, ?, ?)",
+            (otp_record["name"], email, otp_record["password_hash"], "user", False),
         )
 
         # Delete used OTP
@@ -1076,7 +1076,7 @@ def me_api():
     user = g.user
     db = get_db()
     cur = db.execute(
-        "SELECT name, email, avatar_url, phone, bio, role FROM users WHERE id = ?",
+        "SELECT name, email, avatar_url, phone, bio, role, ocr_enabled FROM users WHERE id = ?",
         (user["id"],),
     )
     user_data = cur.fetchone()
@@ -1091,6 +1091,7 @@ def me_api():
             "phone": user_data["phone"],
             "bio": user_data["bio"],
             "role": user_data["role"],
+            "ocr_enabled": bool(user_data.get("ocr_enabled", False)),
         }
     ), 200
 
@@ -1104,19 +1105,26 @@ def update_profile_api():
     name = data.get("name", "").strip()
     phone = data.get("phone", "").strip()
     bio = data.get("bio", "").strip()
+    ocr_enabled = data.get("ocr_enabled")
 
     if not name:
         return jsonify({"error": "Nama tidak boleh kosong"}), 400
 
     try:
-        db.execute(
-            "UPDATE users SET name = ?, phone = ?, bio = ? WHERE id = ?",
-            (name, phone, bio, user_id),
-        )
+        if ocr_enabled is not None:
+            db.execute(
+                "UPDATE users SET name = ?, phone = ?, bio = ?, ocr_enabled = ? WHERE id = ?",
+                (name, phone, bio, bool(ocr_enabled), user_id),
+            )
+        else:
+            db.execute(
+                "UPDATE users SET name = ?, phone = ?, bio = ? WHERE id = ?",
+                (name, phone, bio, user_id),
+            )
         db.commit()
 
         cur = db.execute(
-            "SELECT name, email, avatar_url, phone, bio FROM users WHERE id = ?",
+            "SELECT name, email, avatar_url, phone, bio, ocr_enabled FROM users WHERE id = ?",
             (user_id,),
         )
         updated_user = cur.fetchone()
@@ -1131,6 +1139,7 @@ def update_profile_api():
                     "avatar_url": updated_user["avatar_url"],
                     "phone": updated_user["phone"],
                     "bio": updated_user["bio"],
+                    "ocr_enabled": bool(updated_user.get("ocr_enabled", False)),
                 },
             }
         ), 200
@@ -1179,7 +1188,7 @@ def admin_users_api():
 
     if request.method == "GET":
         cur = db.execute(
-            "SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC"
+            "SELECT id, name, email, role, created_at, ocr_enabled FROM users ORDER BY created_at DESC"
         )
         rows = [
             {
@@ -1188,6 +1197,7 @@ def admin_users_api():
                 "email": r["email"],
                 "role": r["role"],
                 "created_at": r["created_at"],
+                "ocr_enabled": bool(r.get("ocr_enabled", False)),
             }
             for r in cur.fetchall()
         ]
@@ -1213,9 +1223,11 @@ def admin_users_api():
 
         try:
             password_hash = generate_password_hash(password)
+            # Admin gets OCR enabled by default, users get false
+            ocr_enabled = True if role == "admin" else False
             db.execute(
-                "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-                (name, email, password_hash, role),
+                "INSERT INTO users (name, email, password_hash, role, ocr_enabled) VALUES (?, ?, ?, ?, ?)",
+                (name, email, password_hash, role, ocr_enabled),
             )
             db.commit()
             return jsonify(
@@ -1237,6 +1249,7 @@ def admin_user_detail_api(user_id):
         email = data.get("email", "").strip().lower()
         role = data.get("role", "").strip().lower()
         password = data.get("password", "")
+        ocr_enabled = data.get("ocr_enabled")
 
         if not name or not email or not role:
             return jsonify({"error": "Name, email, and role are required"}), 400
@@ -1250,15 +1263,27 @@ def admin_user_detail_api(user_id):
                         {"error": "Password must be at least 6 characters"}
                     ), 400
                 password_hash = generate_password_hash(password)
-                db.execute(
-                    "UPDATE users SET name = ?, email = ?, role = ?, password_hash = ? WHERE id = ?",
-                    (name, email, role, password_hash, user_id),
-                )
+                if ocr_enabled is not None:
+                    db.execute(
+                        "UPDATE users SET name = ?, email = ?, role = ?, password_hash = ?, ocr_enabled = ? WHERE id = ?",
+                        (name, email, role, password_hash, bool(ocr_enabled), user_id),
+                    )
+                else:
+                    db.execute(
+                        "UPDATE users SET name = ?, email = ?, role = ?, password_hash = ? WHERE id = ?",
+                        (name, email, role, password_hash, user_id),
+                    )
             else:
-                db.execute(
-                    "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?",
-                    (name, email, role, user_id),
-                )
+                if ocr_enabled is not None:
+                    db.execute(
+                        "UPDATE users SET name = ?, email = ?, role = ?, ocr_enabled = ? WHERE id = ?",
+                        (name, email, role, bool(ocr_enabled), user_id),
+                    )
+                else:
+                    db.execute(
+                        "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?",
+                        (name, email, role, user_id),
+                    )
             db.commit()
             return jsonify(
                 {"status": "ok", "message": "User updated successfully"}
@@ -1850,22 +1875,69 @@ def chat_api():
     user_id = g.user["id"]
     # Use WIB date for prompts
     today = datetime.now(timezone(timedelta(hours=7))).date()
-    data = request.get_json() or {}
-    user_message = (data.get("message") or "").strip()
+
+    # Handle both JSON and multipart form data (for image uploads)
+    image_file = None
+    image_data = None
+    if request.content_type and "multipart/form-data" in request.content_type:
+        # Image upload
+        user_message = (request.form.get("message") or "").strip()
+        lang = request.form.get("lang", "id")
+        provider = request.form.get("model_provider", "google")
+
+        if "image" in request.files:
+            image_file = request.files["image"]
+            if image_file and image_file.filename:
+                # Read image data
+                import base64
+
+                image_bytes = image_file.read()
+                image_data = base64.b64encode(image_bytes).decode("utf-8")
+                # Reset file pointer if needed
+                image_file.seek(0)
+    else:
+        # Regular JSON request
+        data = request.get_json() or {}
+        user_message = (data.get("message") or "").strip()
+        lang = data.get("lang", "id")
+        provider = data.get("model_provider", "google")
 
     print(f"\n{'=' * 60}")
     print("[DEBUG] === CHAT API ENDPOINT DIPANGGIL ===")
     print(f"[DEBUG] User ID: {user_id}")
     print(f"[DEBUG] User Message: {user_message}")
+    print(f"[DEBUG] Has Image: {image_data is not None}")
     print(f"{'=' * 60}\n")
 
-    if not user_message:
-        return jsonify({"error": "message kosong"}), 400
+    if not user_message and not image_data:
+        return jsonify({"error": "message atau gambar harus diisi"}), 400
 
-    year = int(data.get("year") or today.year)
-    month = int(data.get("month") or today.month)
-    lang = data.get("lang", "id")
-    provider = data.get("model_provider", "google")
+    # Check if user has OCR enabled when image is uploaded
+    if image_data:
+        db = get_db()
+        user_row = db.execute(
+            "SELECT ocr_enabled FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+
+        if not user_row or not user_row.get("ocr_enabled"):
+            return jsonify(
+                {
+                    "error": "Fitur upload gambar belum diaktifkan. Silakan aktifkan OCR di pengaturan profil Anda terlebih dahulu.",
+                    "error_code": "OCR_NOT_ENABLED",
+                }
+            ), 403
+
+    year = int(
+        request.form.get("year") or request.get_json().get("year")
+        if request.get_json()
+        else None or today.year
+    )
+    month = int(
+        request.form.get("month") or request.get_json().get("month")
+        if request.get_json()
+        else None or today.month
+    )
+    provider = provider or "google"
 
     print(f"[DEBUG] Provider: {provider}")
     print(f"[DEBUG] Language: {lang}")
@@ -1930,11 +2002,23 @@ def chat_api():
     # PROVIDER: OPENAI
     if provider == "openai":
         try:
+            # Build user message with image if provided
+            if image_data:
+                user_content = [
+                    {"type": "text", "text": user_prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},
+                    },
+                ]
+            else:
+                user_content = user_prompt
+
             resp = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": base_prompt},
-                    {"role": "user", "content": user_prompt},
+                    {"role": "user", "content": user_content},
                 ],
                 tools=TOOLS_DEFINITIONS,
                 tool_choice="auto",
@@ -2115,9 +2199,25 @@ Action tersedia:
 - transfer_to_savings"""
             prompt = f"{base_prompt}\n\n{user_prompt}\n\n{hint}"
 
-            resp = gemini_model.generate_content(
-                prompt, safety_settings=safety, stream=False
-            )
+            # Build content with image if provided
+            if image_data:
+                import PIL.Image
+                import io
+                import base64
+
+                # Decode base64 image
+                image_bytes = base64.b64decode(image_data)
+                image = PIL.Image.open(io.BytesIO(image_bytes))
+
+                # For Gemini vision
+                content_parts = [prompt, image]
+                resp = gemini_model.generate_content(
+                    content_parts, safety_settings=safety, stream=False
+                )
+            else:
+                resp = gemini_model.generate_content(
+                    prompt, safety_settings=safety, stream=False
+                )
             text = resp.text
 
             jm = re.search(r"```json\s*({.*?})\s*```", text, re.DOTALL)

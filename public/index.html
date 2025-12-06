@@ -547,13 +547,22 @@
                   <span>AI sedang mengetik...</span>
                 </div>
                 <form id="chat-form" class="chat-input-container">
+                  <div id="image-preview-container" style="display: none; padding: 8px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 8px;">
+                    <div style="position: relative; display: inline-block;">
+                      <img id="chat-image-preview" style="max-width: 200px; max-height: 200px; border-radius: 6px; border: 2px solid var(--border-color);" />
+                      <button type="button" id="remove-image-btn" style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold;" title="Remove image">&times;</button>
+                    </div>
+                  </div>
                   <div class="chat-input-wrapper">
                     <button type="button" id="btn-clear-chat" class="input-action-btn" title="Clear chat">
                       <i class="fas fa-trash-alt"></i>
                     </button>
+                    <button type="button" id="btn-upload-image" class="input-action-btn" title="Upload image" style="margin-left: 4px;">
+                      <i class="fas fa-image"></i>
+                    </button>
+                    <input type="file" id="chat-image-input" accept="image/jpeg,image/png,image/webp" style="display: none;" />
                     <textarea id="chat-input" rows="1" placeholder="Ketik pesan Anda..." data-i18n-placeholder="chatPlaceholder"></textarea>
                     <div class="model-selector-inline">
-                      <i class="fas fa-brain" style="font-size: 11px; color: var(--text-tertiary);"></i>
                       <select id="model-provider" style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-tertiary); color: var(--text-secondary);">
                         <option value="google">Gemini 2.5 Flash</option>
                         <option value="openai">GPT-4o mini</option>

@@ -74,11 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const rows = paginate(filtered);
         for (const u of rows) {
             const tr = document.createElement('tr');
+            const ocrBadge = u.ocr_enabled 
+                ? '<span style="padding: 3px 8px; background: #d1fae5; color: #065f46; border-radius: 6px; font-size: 11px; font-weight: 600;"><i class="fas fa-check-circle"></i> Yes</span>'
+                : '<span style="padding: 3px 8px; background: #fee2e2; color: #991b1b; border-radius: 6px; font-size: 11px; font-weight: 600;"><i class="fas fa-times-circle"></i> No</span>';
             tr.innerHTML = `
                 <td>${u.id}</td>
                 <td>${u.name}</td>
                 <td>${u.email}</td>
                 <td>${roleBadge(u.role)}</td>
+                <td>${ocrBadge}</td>
                 <td>
                     <div class="table-actions">
                         <button class="btn-secondary" data-edit-id="${u.id}"><i class="fas fa-edit"></i></button>
@@ -99,6 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalEmail.value = user.email || '';
                 modalPassword.value = '';
                 modalRole.value = user.role || 'user';
+                const modalOcrEnabled = document.getElementById('modal-ocr-enabled');
+                if (modalOcrEnabled) modalOcrEnabled.checked = user.ocr_enabled || false;
                 openModal('Edit Pengguna');
             });
         });
@@ -203,11 +209,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalSave?.addEventListener('click', async () => {
+        const modalOcrEnabled = document.getElementById('modal-ocr-enabled');
         const payload = {
             name: modalName.value.trim(),
             email: modalEmail.value.trim(),
             password: modalPassword.value.trim(),
-            role: modalRole.value.trim() || 'user'
+            role: modalRole.value.trim() || 'user',
+            ocr_enabled: modalOcrEnabled ? modalOcrEnabled.checked : false
         };
         if (!payload.name || !payload.email || (!editingUserId && !payload.password)) {
             showToast('Lengkapi data wajib');
@@ -215,7 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             if (editingUserId) {
-                const res = await apiFetch(`/api/admin/users/${editingUserId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: payload.password, role: payload.role }) });
+                const updatePayload = { 
+                    name: payload.name,
+                    email: payload.email,
+                    role: payload.role,
+                    ocr_enabled: payload.ocr_enabled
+                };
+                if (payload.password) updatePayload.password = payload.password;
+                const res = await apiFetch(`/api/admin/users/${editingUserId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatePayload) });
                 if (!res.ok) throw new Error('Gagal mengupdate');
                 showToast('Pengguna diupdate');
             } else {

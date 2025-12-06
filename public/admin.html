@@ -121,6 +121,7 @@
                             <th data-i18n="userName">Nama</th>
                             <th data-i18n="userEmail">Email</th>
                             <th data-i18n="userRole">Role</th>
+                            <th data-i18n="ocrStatus">OCR</th>
                             <th data-i18n="actions">Aksi</th>
                         </tr>
                     </thead>
@@ -162,6 +163,19 @@
                                 <option value="user" data-i18n="roleUser">User</option>
                                 <option value="admin" data-i18n="roleAdmin">Admin</option>
                             </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <i class="fas fa-image" style="color: #3b82f6;"></i>
+                                    <span style="font-weight: 600; font-size: 14px;" data-i18n="ocrFeature">OCR Feature</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary);" data-i18n="ocrFeatureDesc">Izinkan upload gambar</div>
+                            </div>
+                            <label class="toggle-switch" style="margin: 0;">
+                                <input type="checkbox" id="modal-ocr-enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>

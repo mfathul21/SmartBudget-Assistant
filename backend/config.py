@@ -42,3 +42,7 @@ FLASK_CONFIG = {
 # reCAPTCHA (optional)
 RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY", "")
 RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "")
+
+# OCR / Vision AI Configuration
+ENABLE_OCR_FEATURE = os.environ.get("ENABLE_OCR_FEATURE", "true").lower() == "true"
+GOOGLE_VISION_API_KEY = os.environ.get("GOOGLE_VISION_API_KEY") or GOOGLE_API_KEY

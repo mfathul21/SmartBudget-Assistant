@@ -20,6 +20,7 @@ backend/finance.db
 # Development & Testing
 backend/archive/
 backend/notebook.ipynb
+backend/vision-key.json
 backend/server.log
 *.log
 test_*.py
@@ -27,6 +28,8 @@ test_*.py
 # Uploads
 public/uploads/avatars/*
 !public/uploads/avatars/.gitkeep
+public/uploads/chat_images/*
+!public/uploads/chat_images/.gitkeep
 
 # IDE
 .vscode/

@@ -43,6 +43,32 @@ function parseAmount(valueStr) {
   return parseFloat(String(valueStr).replace(/,/g, ""));
 }
 
+// Utility: show notification toast
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 500;
+    animation: slideInRight 0.3s ease;
+  `;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
 // Helper: fetch dengan session token (dibuat global)
 async function apiFetch(url, options = {}) {
   const token = localStorage.getItem('session_token');
@@ -1343,14 +1369,19 @@ function renderAccountBalanceChart(accounts) {
 
 // --- CHAT FUNCTION ---
 
-function appendChat(role, text) {
+function appendChat(role, text, imageData = null) {
   const box = document.getElementById("chat-box");
   if (!box) return;
   const div = document.createElement("div");
   
   if (role === "user") {
     div.className = "msg-user";
+    let imageHtml = '';
+    if (imageData) {
+      imageHtml = `<div style="margin-bottom: 8px;"><img src="${imageData}" style="max-width: 300px; max-height: 300px; border-radius: 8px; border: 2px solid var(--border-color);" /></div>`;
+    }
     div.innerHTML = `
+      ${imageHtml}
       <div class="message-content">${escapeHtml(text)}</div>
       <div class="message-avatar">
         <i class="fas fa-user"></i>
@@ -1548,7 +1579,7 @@ function loadActiveSession() {
     if (welcomeScreen) welcomeScreen.style.display = 'none';
     box.style.display = 'flex';
     activeSession.messages.forEach(msg => {
-      appendChat(msg.role, msg.content); // Render message without saving again
+      appendChat(msg.role, msg.content, msg.image); // Render message with image if available
     });
     // Auto-scroll to bottom
     setTimeout(() => {
@@ -1660,7 +1691,7 @@ function handleRenameSession(sessionId, newTitle) {
   renderChatSessions();
 }
 
-function addMessageToActiveSession(role, content) {
+function addMessageToActiveSession(role, content, imageData = null) {
   if (!chatData.activeSessionId) {
     createNewSession();
   }
@@ -1670,7 +1701,11 @@ function addMessageToActiveSession(role, content) {
     if (!activeSession.messages) {
       activeSession.messages = [];
     }
-    activeSession.messages.push({ role, content });
+    const message = { role, content };
+    if (imageData) {
+      message.image = imageData;
+    }
+    activeSession.messages.push(message);
     // Auto-title the session based on the first user message
     if (activeSession.messages.length === 1 && role === 'user') {
       activeSession.title = content.substring(0, 25) + (content.length > 25 ? '...' : '');
@@ -2106,6 +2141,100 @@ async function init() {
     });
   }
 
+  // Image upload handling
+  const btnUploadImage = document.getElementById('btn-upload-image');
+  const chatImageInput = document.getElementById('chat-image-input');
+  const imagePreviewContainer = document.getElementById('image-preview-container');
+  const chatImagePreview = document.getElementById('chat-image-preview');
+  const removeImageBtn = document.getElementById('remove-image-btn');
+  let selectedImageFile = null;
+  let ocrEnabled = false;
+
+  // Check OCR status and update button state
+  async function checkOCRStatus() {
+    try {
+      const response = await apiFetch('/api/me');
+      const userData = await response.json();
+      ocrEnabled = userData.ocr_enabled || false;
+      
+      if (btnUploadImage) {
+        if (ocrEnabled) {
+          btnUploadImage.disabled = false;
+          btnUploadImage.style.opacity = '1';
+          btnUploadImage.style.cursor = 'pointer';
+          const currentLang = localStorage.getItem('language') || 'id';
+          btnUploadImage.title = currentLang === 'id' 
+            ? 'Upload Gambar (Struk, Menu, Dokumen)' 
+            : 'Upload Image (Receipts, Menus, Documents)';
+        } else {
+          btnUploadImage.disabled = true;
+          btnUploadImage.style.opacity = '0.5';
+          btnUploadImage.style.cursor = 'not-allowed';
+          const currentLang = localStorage.getItem('language') || 'id';
+          btnUploadImage.title = currentLang === 'id'
+            ? '❌ Upload gambar tidak tersedia - Hubungi admin untuk mengaktifkan OCR'
+            : '❌ Image upload not available - Contact admin to enable OCR';
+        }
+      }
+    } catch (error) {
+      console.error('Error checking OCR status:', error);
+    }
+  }
+
+  // Check OCR status on page load
+  checkOCRStatus();
+
+  if (btnUploadImage && chatImageInput) {
+    btnUploadImage.addEventListener('click', () => {
+      if (!ocrEnabled) {
+        const currentLang = localStorage.getItem('language') || 'id';
+        const message = currentLang === 'id' 
+          ? 'Fitur upload gambar belum diaktifkan. Silakan aktifkan OCR di menu Pengaturan terlebih dahulu.'
+          : 'Image upload feature is not enabled. Please enable OCR in Settings first.';
+        alert(message);
+        return;
+      }
+      chatImageInput.click();
+    });
+
+    chatImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Validate file type
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('Format file tidak didukung. Gunakan JPG, PNG, atau WebP.');
+        chatImageInput.value = '';
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file terlalu besar. Maksimal 5MB.');
+        chatImageInput.value = '';
+        return;
+      }
+
+      // Show preview
+      selectedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        chatImagePreview.src = event.target.result;
+        imagePreviewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (removeImageBtn) {
+      removeImageBtn.addEventListener('click', () => {
+        selectedImageFile = null;
+        chatImageInput.value = '';
+        imagePreviewContainer.style.display = 'none';
+        chatImagePreview.src = '';
+      });
+    }
+  }
+
   // Clear chat button
   if (btnClearChat) {
     btnClearChat.addEventListener('click', () => {
@@ -2119,7 +2248,8 @@ async function init() {
     chatForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = chatInput.value.trim();
-      if (!text) return;
+      const hasImage = selectedImageFile !== null;
+      if (!text && !hasImage) return;
 
       // Hide welcome screen and show chat box
       const welcomeScreen = document.getElementById("chat-welcome-screen");
@@ -2127,12 +2257,29 @@ async function init() {
       welcomeScreen.style.display = 'none';
       chatBox.style.display = 'flex';
 
-      addMessageToActiveSession('user', text);
+      // Store image info if present
+      let imageData = null;
+      const imageFile = selectedImageFile; // Save reference before clearing
+      if (imageFile) {
+        const reader = new FileReader();
+        imageData = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(imageFile);
+        });
+      }
+
+      addMessageToActiveSession('user', text, imageData);
       loadActiveSession(); // Reload to show the new user message
 
       chatInput.value = "";
       chatInput.style.height = 'auto';
       btnChat.disabled = true;
+      
+      // Clear image after sending
+      selectedImageFile = null;
+      chatImageInput.value = '';
+      imagePreviewContainer.style.display = 'none';
+      chatImagePreview.src = '';
       
       // Show typing indicator with translation
       const typingIndicator = document.getElementById("typing-indicator");
@@ -2148,11 +2295,27 @@ async function init() {
 
       // --- Unified SSE Streaming for both providers ---
       try {
-        const response = await apiFetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, model_provider: modelProvider, lang: localStorage.getItem('language') || 'id' })
-        });
+        let response;
+        if (imageData) {
+          // Use FormData for image upload
+          const formData = new FormData();
+          formData.append('message', text || 'Analyze this image');
+          formData.append('image', imageFile);
+          formData.append('model_provider', modelProvider);
+          formData.append('lang', localStorage.getItem('language') || 'id');
+          
+          response = await apiFetch('/api/chat', {
+            method: 'POST',
+            body: formData
+          });
+        } else {
+          // Regular JSON request
+          response = await apiFetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, model_provider: modelProvider, lang: localStorage.getItem('language') || 'id' })
+          });
+        }
         if (!response.ok) {
           // Try to extract JSON error
           let errMsg = `HTTP error! status: ${response.status}`;
@@ -2272,7 +2435,17 @@ async function init() {
         // Show error in the streaming container to avoid duplicate messages
         const box = document.getElementById("chat-box");
         if (!streamDiv) ensureStreamContainer();
-        streamContent.innerHTML = `❌ ${escapeHtml(error.message || 'Terjadi error koneksi stream.')}`;
+        
+        // Check for OCR-specific error
+        if (error.message && error.message.includes('OCR_NOT_ENABLED')) {
+          const currentLang = localStorage.getItem('language') || 'id';
+          const errorMsg = currentLang === 'id'
+            ? 'Fitur upload gambar belum diaktifkan. Silakan aktifkan OCR di <a href="/settings.html" style="color: #3b82f6; text-decoration: underline;">Pengaturan</a> terlebih dahulu.'
+            : 'Image upload feature is not enabled. Please enable OCR in <a href="/settings.html" style="color: #3b82f6; text-decoration: underline;">Settings</a> first.';
+          streamContent.innerHTML = `❌ ${errorMsg}`;
+        } else {
+          streamContent.innerHTML = `❌ ${escapeHtml(error.message || 'Terjadi error koneksi stream.')}`;
+        }
         console.error('Streaming error:', error);
       } finally {
         btnChat.disabled = false;

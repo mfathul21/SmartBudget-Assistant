@@ -378,6 +378,38 @@
                     </div>
                 </div>
 
+                <!-- OCR Feature Toggle -->
+                <div class="setting-card">
+                    <div class="setting-header">
+                        <div class="setting-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="setting-info">
+                            <h2 data-i18n="ocrTitle">Fitur Upload Gambar (OCR)</h2>
+                            <p data-i18n="ocrDesc">Aktifkan untuk menggunakan fitur upload gambar di Advisor (struk, menu, dokumen)</p>
+                        </div>
+                    </div>
+                    <div class="setting-content">
+                        <div class="toggle-container">
+                            <div class="toggle-info">
+                                <i class="fas fa-image" style="color: #10b981; font-size: 1.5rem;"></i>
+                                <div>
+                                    <div class="toggle-title" data-i18n="ocrToggleTitle">Upload Gambar dengan AI Vision</div>
+                                    <div class="toggle-subtitle" data-i18n="ocrToggleDesc">AI dapat menganalisis struk belanja, menu restoran, dan dokumen keuangan</div>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ocr-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div id="ocr-status" class="setting-note" style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; font-size: 0.875rem;">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="ocr-status-text">Memuat status OCR...</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Auto-logout Timer Setting -->
                 <div class="setting-card">
                     <div class="setting-header">
@@ -527,6 +559,82 @@
             // Restart timer with new timeout
             startLogoutTimer();
         });
+
+        // OCR Toggle Logic
+        const ocrToggle = document.getElementById('ocr-toggle');
+        const ocrStatusText = document.getElementById('ocr-status-text');
+
+        // Load current OCR status
+        async function loadOCRStatus() {
+            try {
+                const response = await apiFetch('/api/me');
+                const userData = await response.json();
+                
+                const isEnabled = userData.ocr_enabled || false;
+                ocrToggle.checked = isEnabled;
+                updateOCRStatus(isEnabled);
+            } catch (error) {
+                console.error('Error loading OCR status:', error);
+                ocrStatusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> Gagal memuat status OCR';
+            }
+        }
+
+        // Update OCR status display
+        function updateOCRStatus(isEnabled) {
+            if (isEnabled) {
+                ocrStatusText.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span style="color: #10b981; font-weight: 500;">Upload gambar diaktifkan</span> - Anda dapat upload struk, menu, dan dokumen di Advisor';
+            } else {
+                ocrStatusText.innerHTML = '<i class="fas fa-times-circle" style="color: #ef4444;"></i> <span style="color: #ef4444; font-weight: 500;">Upload gambar dinonaktifkan</span> - Aktifkan untuk menggunakan fitur analisis gambar';
+            }
+        }
+
+        // Handle OCR toggle change
+        ocrToggle.addEventListener('change', async function() {
+            const isEnabled = this.checked;
+            
+            try {
+                // Get current user data first
+                const getUserRes = await apiFetch('/api/me');
+                const userData = await getUserRes.json();
+                
+                // Update with OCR setting
+                const response = await apiFetch('/api/me', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: userData.name,
+                        phone: userData.phone || '',
+                        bio: userData.bio || '',
+                        ocr_enabled: isEnabled
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update OCR setting');
+                }
+                
+                const result = await response.json();
+                updateOCRStatus(isEnabled);
+                
+                // Show temporary success message
+                const originalText = ocrStatusText.innerHTML;
+                ocrStatusText.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> <span style="color: #10b981; font-weight: 600;">Pengaturan berhasil disimpan!</span>';
+                setTimeout(() => {
+                    updateOCRStatus(isEnabled);
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error updating OCR setting:', error);
+                // Revert toggle on error
+                this.checked = !isEnabled;
+                ocrStatusText.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> <span style="color: #ef4444;">Gagal menyimpan pengaturan. Silakan coba lagi.</span>';
+            }
+        });
+
+        // Load OCR status on page load
+        loadOCRStatus();
 
         // Start logout timer
         function startLogoutTimer() {

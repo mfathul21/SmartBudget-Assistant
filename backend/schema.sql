@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url TEXT,
     phone TEXT,
     bio TEXT,
+    ocr_enabled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
