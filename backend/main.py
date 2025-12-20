@@ -2114,7 +2114,7 @@ def chat_api():
     if lang == "en":
         base_prompt = (
             f"You are FIN, a concise finance assistant for {user_name}. "
-            f"Current time: {time_str}. After executing tools, output status lines (G��/G��) before explanation. "
+            f"Current time: {time_str}. After executing tools, output status lines (✓ Success/✗ Failed) before explanation. "
             f"CRITICAL RULES:\n"
             f"1. For INCOME: 'category' is REQUIRED (e.g., Salary, Bonus, Sales). ASK if not specified.\n"
             f"2. For EXPENSE: 'category' is required. ASK if unclear.\n"
@@ -2127,7 +2127,7 @@ def chat_api():
     else:
         base_prompt = (
             f"Kamu FIN, asisten keuangan ringkas untuk {user_name}. "
-            f"Waktu: {time_str}. Setelah eksekusi tool tampilkan baris status (G��/G��) sebelum penjelasan. "
+            f"Waktu: {time_str}. Setelah eksekusi tool tampilkan baris status (✓ Berhasil/✗ Gagal) sebelum penjelasan. "
             f"ATURAN KRITIS:\n"
             f"1. Untuk PEMASUKAN: 'category' WAJIB jelas (contoh: Gaji, Bonus, Penjualan). TANYA jika tidak disebutkan.\n"
             f"2. Untuk PENGELUARAN: 'category' wajib ada. TANYA jika tidak jelas.\n"
