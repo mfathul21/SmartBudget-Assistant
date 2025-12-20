@@ -915,7 +915,7 @@ def delete_account_api():
     try:
         # Delete all user data (cascade will handle related tables if FK constraints exist)
         # Manual deletion for safety
-        db.execute("DELETE FROM chat_logs WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM llm_logs WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM chat_summaries WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM chat_log_embeddings WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM transactions WHERE user_id = %s", (user_id,))

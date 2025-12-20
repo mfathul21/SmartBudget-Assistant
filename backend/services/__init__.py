@@ -1,10 +1,8 @@
 """
 Services Module - Business logic and service layer
-Includes transaction service, conversation state, and utilities
+Includes conversation state management
 """
 
-from .transaction_service import TransactionService
 from .conversation_state_manager import ConversationStateManager
-from .intent_classifier import IntentClassifier
 
-__all__ = ["TransactionService", "ConversationStateManager", "IntentClassifier"]
+__all__ = ["ConversationStateManager"]

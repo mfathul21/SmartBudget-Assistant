@@ -3,7 +3,6 @@ from flask import Blueprint, request, jsonify, g
 from core import get_logger
 from auth import require_login
 from database import get_db
-from core import ensure_log_embeddings, semantic_search
 from memory import (
     SUMMARY_THRESHOLD,
     MAX_LOG_CONTEXT,
@@ -510,18 +509,19 @@ def list_session_ids_api():
     ), 200
 
 
-@memory_bp.route("/api/memory/search", methods=["GET"])
-@require_login
-def memory_search_api():
-    user_id = g.user["id"]
-    query = (request.args.get("q") or "").strip()
-    top_k = int(request.args.get("top_k") or 5)
-    if not query:
-        return jsonify({"error": "q parameter kosong"}), 400
-
-    stats = ensure_log_embeddings(user_id, batch_size=200)
-    results = semantic_search(user_id, query, top_k=top_k)
-    return jsonify({"results": results, "embedding_update": stats}), 200
+# Semantic search endpoint removed (embeddings.py deleted as dead code)
+# @memory_bp.route("/api/memory/search", methods=["GET"])
+# @require_login
+# def memory_search_api():
+#     user_id = g.user["id"]
+#     query = (request.args.get("q") or "").strip()
+#     top_k = int(request.args.get("top_k") or 5)
+#     if not query:
+#         return jsonify({"error": "q parameter kosong"}), 400
+#
+#     stats = ensure_log_embeddings(user_id, batch_size=200)
+#     results = semantic_search(user_id, query, top_k=top_k)
+#     return jsonify({"results": results, "embedding_update": stats}), 200
 
 
 @memory_bp.route("/api/memory/config", methods=["GET", "PUT"])

@@ -7,7 +7,6 @@ from datetime import datetime, timedelta, timezone
 import re
 from typing import Dict, Any, Optional
 from core import get_logger, TransactionValidator, ValidationError
-from services import TransactionService
 from database import get_db
 
 try:
@@ -166,7 +165,7 @@ def _execute_add_transaction(
                 "amount": amount,
                 "category": category,
                 "description": description,
-                "date": date,
+                "date": date or datetime.now().strftime("%Y-%m-%d"),
             }
         )
     except ValidationError as ve:
@@ -183,17 +182,36 @@ def _execute_add_transaction(
             "ask_user": f"Mohon lengkapi: {ve.message}",
         }
 
-    # Execute transaction with isolation
-    result = TransactionService.record_transaction(
-        db=db,
-        user_id=user_id,
-        tx_type=validated["type"],
-        amount=validated["amount"],
-        category=validated["category"],
-        description=validated["description"],
-        date=validated["date"],
-        account=account,
-    )
+    # Execute transaction with direct database operation
+    try:
+        db.execute(
+            """INSERT INTO transactions 
+               (user_id, date, type, category, description, amount, account) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (
+                user_id,
+                validated["date"],
+                validated["type"],
+                validated["category"],
+                validated["description"],
+                validated["amount"],
+                account,
+            ),
+        )
+        db.commit()
+        result = {
+            "success": True,
+            "message": f"Transaksi {validated['type']} berhasil dicatat",
+            "amount": validated["amount"],
+            "category": validated["category"],
+        }
+    except Exception as e:
+        logger.error("transaction_insert_error", user_id=user_id, error=str(e))
+        result = {
+            "success": False,
+            "message": f"Gagal menyimpan transaksi: {str(e)}",
+            "code": "INSERT_ERROR",
+        }
 
     return result
 
@@ -523,85 +541,40 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
             amount=amount,
         )
 
-        cur = db.cursor()
-        cur.execute("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        # Insert debit transaction from source account
+        db.execute(
+            """INSERT INTO transactions 
+               (user_id, date, type, category, description, amount, account) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (user_id, date or datetime.now().strftime("%Y-%m-%d"), "expense", 
+             "Transfer", f"Transfer to {to_account}: {description}", 
+             amount, from_account)
+        )
 
-        try:
-            # Lock both accounts
-            cur.execute(
-                """
-                SELECT id, balance FROM accounts 
-                WHERE user_id = %s AND name IN (%s, %s)
-                ORDER BY name
-                FOR UPDATE
-                """,
-                (user_id, from_account, to_account),
-            )
+        # Insert credit transaction to target account
+        db.execute(
+            """INSERT INTO transactions 
+               (user_id, date, type, category, description, amount, account) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (user_id, date or datetime.now().strftime("%Y-%m-%d"), "income",
+             "Transfer", f"Transfer from {from_account}: {description}",
+             amount, to_account)
+        )
 
-            accounts = {row[0]: row[1] for row in cur.fetchall()}
+        db.commit()
 
-            if len(accounts) < 2:
-                cur.execute("ROLLBACK")
-                logger.warning(
-                    "transfer_account_not_found",
-                    user_id=user_id,
-                    from_account=from_account,
-                    to_account=to_account,
-                )
-                return {
-                    "success": False,
-                    "message": "Salah satu atau kedua akun tidak ditemukan",
-                    "code": "ACCOUNT_NOT_FOUND",
-                }
+        logger.info(
+            "transfer_completed",
+            user_id=user_id,
+            from_account=from_account,
+            to_account=to_account,
+            amount=amount,
+        )
 
-            from_balance = accounts.get(from_account, 0)
-
-            if from_balance < amount:
-                cur.execute("ROLLBACK")
-                logger.warning(
-                    "transfer_insufficient_balance",
-                    user_id=user_id,
-                    from_account=from_account,
-                    available=from_balance,
-                    requested=amount,
-                )
-                return {
-                    "success": False,
-                    "message": f"Saldo {from_account} tidak cukup",
-                    "code": "INSUFFICIENT_BALANCE",
-                    "available": from_balance,
-                    "requested": amount,
-                }
-
-            # Execute transfer
-            cur.execute(
-                "UPDATE accounts SET balance = balance - %s WHERE user_id = %s AND name = %s",
-                (amount, user_id, from_account),
-            )
-
-            cur.execute(
-                "UPDATE accounts SET balance = balance + %s WHERE user_id = %s AND name = %s",
-                (amount, user_id, to_account),
-            )
-
-            db.commit()
-
-            logger.info(
-                "transfer_completed",
-                user_id=user_id,
-                from_account=from_account,
-                to_account=to_account,
-                amount=amount,
-            )
-
-            return {
-                "success": True,
-                "message": f"✅ Transfer Rp {amount:,.0f} dari {from_account} ke {to_account} berhasil",
-            }
-
-        except Exception as inner_e:
-            db.rollback()
-            raise inner_e
+        return {
+            "success": True,
+            "message": f"✅ Transfer Rp {amount:,.0f} dari {from_account} ke {to_account} berhasil",
+        }
 
     except Exception as e:
         logger.error(
