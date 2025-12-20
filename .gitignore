@@ -12,6 +12,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+backend/tests/
 
 # ==========================================
 # Sensitive & Security - NEVER COMMIT
@@ -48,8 +49,19 @@ backend/tests/__pycache__/
 backend/tests/*.pyc
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
+test_*.py
+*_test.py
+*.test.py
+.pytest_tmp/
+pytest.ini
+conftest.py.bak
+test_results/
+test_reports/
+test_cache/
+.testmondata
 
 # ==========================================
 # Development Files - Not for Production
@@ -91,12 +103,18 @@ desktop.ini
 .render/
 
 # ==========================================
-# Documentation - Keep Important Docs
+# Documentation - Keep Important Docs Only
 # ==========================================
-# Allow README and important documentation
+# Ignore all markdown files by default
+*.md
+# Allow README and critical documentation
 !README.md
-!IMPORT_REFERENCE.md
-!REFACTORING_SUMMARY.md
+!.gitkeep
+# Also ignore other doc formats
+*.rst
+*.txt
+docs/
+documentation/
 # But ignore temporary docs
 *_DRAFT.md
 *_WIP.md
