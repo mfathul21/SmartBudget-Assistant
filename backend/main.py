@@ -277,7 +277,7 @@ def send_otp_email(to_email: str, otp_code: str, user_name: str) -> bool:
                   <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
                     <tr>
                       <td style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 40px 30px; text-align: center;">
-                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">=��� Verifikasi Email</h1>
+                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">🔐 Verifikasi Email</h1>
                         <p style="margin: 8px 0 0 0; color: #bfdbfe; font-size: 14px; font-weight: 400;">SmartBudget Assistant</p>
                       </td>
                     </tr>
@@ -298,7 +298,7 @@ def send_otp_email(to_email: str, otp_code: str, user_name: str) -> bool:
                     <tr>
                       <td style="background: #f9fafb; padding: 24px 30px; border-top: 1px solid #e5e7eb;">
                         <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px; line-height: 1.5;">Jika Anda tidak mendaftar di SmartBudget Assistant, abaikan email ini dengan aman.</p>
-                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">-� 2025 SmartBudget Assistant</p>
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">© 2025 SmartBudget Assistant</p>
                       </td>
                     </tr>
                   </table>
@@ -321,7 +321,7 @@ Jangan bagikan kode ini kepada siapa pun.
 
 Jika Anda tidak mendaftar, abaikan email ini.
 
--� 2025 SmartBudget Assistant"""
+© 2025 SmartBudget Assistant"""
 
     # Try SendGrid first
     print(f"[EMAIL] Sending OTP to {to_email}...")
@@ -454,7 +454,7 @@ def send_password_reset_email(
                         </p>
                         <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
                         <p style="margin: 0; color: #9ca3af; font-size: 11px; text-align: center;">
-                          -� 2025 SmartBudget Assistant. All rights reserved.
+                          © 2025 SmartBudget Assistant. All rights reserved.
                         </p>
                       </td>
                     </tr>
