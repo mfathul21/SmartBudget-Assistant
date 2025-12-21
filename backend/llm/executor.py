@@ -20,6 +20,11 @@ from llm.validation_utils import (
     suggest_category,
     VALID_CATEGORIES_BY_TYPE,
 )
+from llm.input_interpreter import (
+    interpret_input,
+    get_interpreter,
+    MatchConfidence,
+)
 
 try:
     import dateparser
@@ -211,16 +216,34 @@ def _execute_add_transaction(
             "requires_clarification": True,
         }
 
-    # Validate account with fuzzy matching and ask for confirmation if needed
-    account_result = validate_account_with_confirmation(account)
-    if not account_result["success"]:
-        return account_result
+    # Interpret account with transparency - use input_interpreter
+    interpreter = get_interpreter()
+    account_interp = interpreter.interpret_account(account)
     
-    account = account_result["account"]
+    if account_interp.confidence == MatchConfidence.NO_MATCH:
+        # No match found
+        return {
+            "success": False,
+            "message": account_interp.explanation,
+            "code": "INVALID_ACCOUNT",
+            "ask_user": account_interp.explanation,
+            "requires_clarification": True,
+        }
     
-    # If account parsing was fuzzy-matched, ask for confirmation
-    if account_result.get("requires_confirmation"):
-        return account_result
+    # Extract normalized account
+    account = account_interp.interpreted_value
+    
+    # If fuzzy matched, ask for confirmation with explanation
+    if account_interp.needs_confirmation:
+        confirmation_msg = interpreter.format_confirmation_message(account_interp)
+        return {
+            "success": False,
+            "message": f"Konfirmasi akun: {account}",
+            "code": "CONFIRM_ACCOUNT",
+            "ask_user": confirmation_msg,
+            "requires_confirmation": True,
+            "interpretation": account_interp.to_dict(),
+        }
 
     # Date - ask user if not provided (don't default to today)
     if not date:
@@ -233,26 +256,29 @@ def _execute_add_transaction(
             "requires_clarification": True,
         }
 
-    # Validate date with natural language and ask for confirmation if needed
-    date_result = validate_date_with_confirmation(date)
-    if not date_result["success"]:
-        return date_result
+    # Interpret date with transparency and confirmation
+    date_interp = interpreter.interpret_date(date)
     
-    normalized_date = date_result["date"]
-    
-    # If date parsing was natural language, ask for confirmation
-    if date_result.get("requires_confirmation"):
-        return date_result
-
-    # Confirm large amount
-    needs_confirm, confirm_msg = format_amount_confirmation(amount, "transaksi")
-    if needs_confirm:
+    if date_interp.confidence == MatchConfidence.NO_MATCH:
         return {
             "success": False,
-            "message": "Konfirmasi jumlah besar",
-            "code": "CONFIRM_AMOUNT",
-            "ask_user": confirm_msg + "\nApakah benar Rp " + f"{amount:,.0f}?",
+            "message": date_interp.explanation,
+            "code": "INVALID_DATE",
+            "ask_user": date_interp.explanation,
+            "requires_clarification": True,
+        }
+    
+    normalized_date = date_interp.interpreted_value
+    
+    if date_interp.needs_confirmation:
+        confirmation_msg = interpreter.format_confirmation_message(date_interp)
+        return {
+            "success": False,
+            "message": f"Konfirmasi tanggal: {normalized_date}",
+            "code": "CONFIRM_DATE",
+            "ask_user": confirmation_msg,
             "requires_confirmation": True,
+            "interpretation": date_interp.to_dict(),
         }
 
     # Validate using TransactionValidator
@@ -716,15 +742,15 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
     from_result = validate_account_with_confirmation(from_account)
     if not from_result["success"]:
         return from_result
-    
+
     from_account = from_result["account"]
     if from_result.get("requires_confirmation"):
         return from_result
-    
+
     to_result = validate_account_with_confirmation(to_account)
     if not to_result["success"]:
         return to_result
-    
+
     to_account = to_result["account"]
     if to_result.get("requires_confirmation"):
         return to_result
@@ -777,7 +803,7 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
     date_result = validate_date_with_confirmation(date)
     if not date_result["success"]:
         return date_result
-    
+
     normalized_date = date_result["date"]
     if date_result.get("requires_confirmation"):
         return date_result
