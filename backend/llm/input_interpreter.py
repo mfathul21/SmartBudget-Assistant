@@ -362,7 +362,7 @@ class InputInterpreter:
     
     def format_confirmation_message(self, result: InterpretationResult) -> str:
         """
-        Format a user-friendly confirmation message (without technical details)
+        Format a user-friendly confirmation message with natural language
         
         Args:
             result: InterpretationResult to format
@@ -373,21 +373,18 @@ class InputInterpreter:
         if not result.needs_confirmation or not result.interpreted_value:
             return ""
         
-        msg = f"Saya interpretasi '{result.original_input}' sebagai "
-        
+        # Build natural language confirmation messages
         if result.field_type == "account":
-            msg += f"akun **{result.interpreted_value}**"
+            msg = f"Jadi akun yang Anda maksud adalah **{result.interpreted_value}**, benar?"
         elif result.field_type == "date":
-            msg += f"tanggal **{result.interpreted_value}**"
+            msg = f"Tanggalnya adalah **{result.interpreted_value}**, ya?"
         elif result.field_type == "category":
-            msg += f"kategori **{result.interpreted_value}**"
+            msg = f"Kategorinya **{result.interpreted_value}**, setuju?"
         else:
-            msg += f"{result.field_type} **{result.interpreted_value}**"
+            msg = f"{result.field_type} Anda adalah **{result.interpreted_value}**, benar?"
         
         if result.alternatives:
-            msg += f"\n\nAlternatif lain: {', '.join(result.alternatives)}"
-        
-        msg += "\n\nBenar? Respons dengan 'ya' atau 'tidak'"
+            msg += f"\n\nAtau mungkin Anda maksud: {', '.join(result.alternatives)}?"
         
         return msg
     

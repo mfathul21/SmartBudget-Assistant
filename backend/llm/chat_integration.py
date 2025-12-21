@@ -20,7 +20,7 @@ class ChatIntegrationHelper:
         interpretations: Dict[str, InterpretationResult]
     ) -> str:
         """
-        Build a message that mentions all interpreted fields (without technical details)
+        Build a message that mentions all interpreted fields with natural language
         
         Args:
             interpretations: Dict of field_type -> InterpretationResult
@@ -41,18 +41,25 @@ class ChatIntegrationHelper:
             if result.confidence == MatchConfidence.NO_MATCH:
                 continue
             
-            # Build interpretation message (without technical details)
-            mention = f"💭 **{field_type.title()}**: {result.interpreted_value}"
+            # Build natural language mention
+            if field_type == "account":
+                mention = f"📱 Akun: **{result.interpreted_value}**"
+            elif field_type == "date":
+                mention = f"📅 Tanggal: **{result.interpreted_value}**"
+            elif field_type == "category":
+                mention = f"📂 Kategori: **{result.interpreted_value}**"
+            else:
+                mention = f"📝 {field_type.title()}: **{result.interpreted_value}**"
             
             if result.alternatives:
-                mention += f" (atau {', '.join(result.alternatives)})"
+                mention += f"\n   (atau {', '.join(result.alternatives)})"
             
             message_parts.append(mention)
         
         if not message_parts:
             return ""
         
-        return "\n\n" + "\n\n".join(message_parts) + "\n\nBenar demikian?"
+        return "\n\n" + "\n\n".join(message_parts) + "\n\nBenar semua?"
     
     @staticmethod
     def build_confirmation_request(
@@ -61,7 +68,7 @@ class ChatIntegrationHelper:
         action_name: str = ""
     ) -> Dict[str, Any]:
         """
-        Build a complete confirmation request for user (without technical details)
+        Build a complete confirmation request for user with natural language
         
         Args:
             field_type: Type of field being confirmed
@@ -71,15 +78,18 @@ class ChatIntegrationHelper:
         Returns:
             Dict with confirmation message and details
         """
-        confirmation_msg = (
-            f"Saya interpretasi '{result.original_input}' sebagai "
-            f"**{result.interpreted_value}**\n"
-        )
+        # Build natural language confirmation
+        if field_type == "account":
+            confirmation_msg = f"Jadi akun yang Anda maksud adalah **{result.interpreted_value}**, benar?"
+        elif field_type == "date":
+            confirmation_msg = f"Tanggalnya adalah **{result.interpreted_value}**, ya?"
+        elif field_type == "category":
+            confirmation_msg = f"Kategorinya **{result.interpreted_value}**, setuju?"
+        else:
+            confirmation_msg = f"{field_type.title()} Anda adalah **{result.interpreted_value}**, benar?"
         
         if result.alternatives:
-            confirmation_msg += f"\nAlternatif lain: {', '.join(result.alternatives)}\n"
-        
-        confirmation_msg += "\nBenar? Respons dengan 'ya' atau 'tidak'"
+            confirmation_msg += f"\n\nAtau mungkin Anda maksud: {', '.join(result.alternatives)}?"
         
         return {
             "requires_confirmation": True,

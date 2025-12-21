@@ -138,7 +138,7 @@ class InterpretationMiddleware:
         checkpoint: InterpretationCheckpoint
     ) -> Dict[str, Any]:
         """
-        Build a response asking user to confirm an interpretation
+        Build a response asking user to confirm an interpretation with natural language
         
         Args:
             checkpoint: InterpretationCheckpoint to confirm
@@ -146,12 +146,18 @@ class InterpretationMiddleware:
         Returns:
             Response dict for chat API
         """
-        msg = f"Saya interpretasi '{checkpoint.original_input}' sebagai **{checkpoint.interpreted_value}**\n"
+        # Build natural language confirmation
+        if checkpoint.field_type == "account":
+            msg = f"Jadi akun yang Anda maksud adalah **{checkpoint.interpreted_value}**, benar?"
+        elif checkpoint.field_type == "date":
+            msg = f"Tanggalnya adalah **{checkpoint.interpreted_value}**, ya?"
+        elif checkpoint.field_type == "category":
+            msg = f"Kategorinya **{checkpoint.interpreted_value}**, setuju?"
+        else:
+            msg = f"{checkpoint.field_type.title()} Anda adalah **{checkpoint.interpreted_value}**, benar?"
         
         if checkpoint.alternatives:
-            msg += f"\nAlternatif lain: {', '.join(checkpoint.alternatives)}\n"
-        
-        msg += "\nBenar? Respons dengan **'ya'** atau **'tidak'**"
+            msg += f"\n\nAtau mungkin Anda maksud: {', '.join(checkpoint.alternatives)}?"
         
         return {
             "success": False,
