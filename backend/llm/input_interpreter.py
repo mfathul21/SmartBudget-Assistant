@@ -18,6 +18,13 @@ from validation_utils import (
     VALID_ACCOUNTS,
     VALID_CATEGORIES_BY_TYPE,
 )
+from interpreter_config import (
+    FUZZY_MATCHING_THRESHOLDS,
+    get_natural_date_terms,
+    CONFIRMATION_TEMPLATES,
+    get_explanation,
+    get_confirmation_message,
+)
 
 
 class MatchConfidence(Enum):
@@ -65,12 +72,7 @@ class InputInterpreter:
 
     def __init__(self):
         """Initialize interpreter with fuzzy matching thresholds"""
-        self.THRESHOLDS = {
-            "exact": 1.0,
-            "high": 0.85,
-            "medium": 0.65,
-            "low": 0.40,
-        }
+        self.THRESHOLDS = FUZZY_MATCHING_THRESHOLDS
 
     def interpret_account(self, user_input: str) -> InterpretationResult:
         """
@@ -89,7 +91,7 @@ class InputInterpreter:
                 interpreted_value=None,
                 confidence=MatchConfidence.NO_MATCH,
                 needs_confirmation=False,
-                explanation="Akun belum disebutkan. Coba kasih tahu akun mana yang dipakai ya!",
+                explanation=get_explanation("account", "empty"),
             )
 
         user_input = user_input.strip()
@@ -145,8 +147,13 @@ class InputInterpreter:
                 confidence=confidence,
                 needs_confirmation=confidence != MatchConfidence.EXACT,
                 alternatives=alternatives,
-                explanation=f"Saya kira '{user_input}' itu akun {best_value}. Yuk saya bantu yakinkan!"
-                + (f"\nKalau bukan, ada pilihan lain: {', '.join(alternatives)}" if alternatives else ""),
+                explanation=get_explanation(
+                    "account",
+                    "fuzzy_with_alternatives" if alternatives else "fuzzy_match",
+                    input=user_input,
+                    value=best_value,
+                    alternatives=", ".join(alternatives) if alternatives else "",
+                ),
             )
 
         # Fuzzy match against main dict (fallback)
@@ -174,8 +181,13 @@ class InputInterpreter:
                 confidence=confidence,
                 needs_confirmation=confidence != MatchConfidence.EXACT,
                 alternatives=alternatives,
-                explanation=f"Saya kira '{user_input}' itu akun {best_value}. Yuk saya bantu yakinkan!"
-                + (f"\nKalau bukan, ada pilihan lain: {', '.join(alternatives)}" if alternatives else ""),
+                explanation=get_explanation(
+                    "account",
+                    "fuzzy_with_alternatives" if alternatives else "fuzzy_match",
+                    input=user_input,
+                    value=best_value,
+                    alternatives=", ".join(alternatives) if alternatives else "",
+                ),
             )
 
         # No match
@@ -186,8 +198,7 @@ class InputInterpreter:
             interpreted_value=None,
             confidence=MatchConfidence.NO_MATCH,
             needs_confirmation=False,
-            explanation=f"Hmm, '{user_input}' bukan akun yang aku kenal. "
-            f"Mungkin maksud Anda salah satu dari ini: {', '.join(valid_accounts)}?",
+            explanation=get_explanation("account", "no_match", input=user_input, valid_options=", ".join(valid_accounts)),
         )
 
     def interpret_date(self, user_input: str) -> InterpretationResult:
@@ -207,7 +218,7 @@ class InputInterpreter:
                 interpreted_value=None,
                 confidence=MatchConfidence.EXACT,
                 needs_confirmation=False,
-                explanation="Tanggal opsional - aku akan pakai hari ini kalau Anda tidak sebutkan.",
+                explanation=get_explanation("date", "empty"),
             )
 
         user_input = user_input.strip()
@@ -217,27 +228,7 @@ class InputInterpreter:
 
         if parsed_date:
             # Check if input is exact natural language term
-            natural_terms = [
-                "hari ini",
-                "today",
-                "sekarang",
-                "kemarin",
-                "yesterday",
-                "besok",
-                "tomorrow",
-                "minggu depan",
-                "next week",
-                "minggu lalu",
-                "last week",
-                "bulan depan",
-                "next month",
-                "bulan lalu",
-                "last month",
-                "tahun depan",
-                "next year",
-                "tahun lalu",
-                "last year",
-            ]
+            natural_terms = get_natural_date_terms()
 
             is_natural_term = user_input.lower() in natural_terms
             confidence = (
@@ -257,7 +248,7 @@ class InputInterpreter:
                 interpreted_value=parsed_date,
                 confidence=confidence,
                 needs_confirmation=not is_natural_term,
-                explanation=f"Oke, '{user_input}' itu {formatted}. Pas, kan?",
+                explanation=get_explanation("date", "natural", input=user_input, formatted=formatted),
             )
 
         # Try strict YYYY-MM-DD format
@@ -282,7 +273,7 @@ class InputInterpreter:
                 interpreted_value=normalized,
                 confidence=MatchConfidence.MEDIUM,
                 needs_confirmation=True,
-                explanation=f"Saya pikir '{user_input}' maksudnya 31 Desember {user_input}. Betul?",
+                explanation=get_explanation("date", "year_only", input=user_input),
             )
 
         # No match
@@ -292,7 +283,7 @@ class InputInterpreter:
             interpreted_value=None,
             confidence=MatchConfidence.NO_MATCH,
             needs_confirmation=False,
-            explanation="Wah, formatnya agak aneh. Coba dengan 'hari ini', '25 desember', '2025-12-25', atau tahunnya aja '2025'!",
+            explanation=get_explanation("date", "no_match"),
         )
 
     def interpret_category(
@@ -316,7 +307,7 @@ class InputInterpreter:
                 interpreted_value=None,
                 confidence=MatchConfidence.NO_MATCH,
                 needs_confirmation=False,
-                explanation=f"Harus pilih kategori dari: {', '.join(categories)}. Mana yang cocok?",
+                explanation=get_explanation("category", "empty", categories=", ".join(categories)),
             )
 
         user_input = user_input.strip()
@@ -368,8 +359,13 @@ class InputInterpreter:
                 confidence=confidence,
                 needs_confirmation=confidence != MatchConfidence.EXACT,
                 alternatives=alternatives,
-                explanation=f"Sepertinya '{user_input}' itu kategori {best_match}. Sesuai, kan?"
-                + (f"\nKalau tidak, ada juga: {', '.join(alternatives)}" if alternatives else ""),
+                explanation=get_explanation(
+                    "category",
+                    "fuzzy_with_alternatives" if alternatives else "fuzzy_match",
+                    input=user_input,
+                    value=best_match,
+                    alternatives=", ".join(alternatives) if alternatives else "",
+                ),
             )
 
         # No match
@@ -379,7 +375,7 @@ class InputInterpreter:
             interpreted_value=None,
             confidence=MatchConfidence.NO_MATCH,
             needs_confirmation=False,
-            explanation=f"Kategori '{user_input}' belum pernah aku temui. Pilih dari: {', '.join(valid_categories)} ya!",
+            explanation=get_explanation("category", "no_match", input=user_input, valid_options=", ".join(valid_categories)),
         )
 
     def format_confirmation_message(self, result: InterpretationResult) -> str:
@@ -395,15 +391,7 @@ class InputInterpreter:
         if not result.needs_confirmation or not result.interpreted_value:
             return ""
 
-        # Build natural language confirmation messages
-        if result.field_type == "account":
-            msg = f"Jadi akun yang Anda maksud adalah **{result.interpreted_value}**, benar?"
-        elif result.field_type == "date":
-            msg = f"Tanggalnya adalah **{result.interpreted_value}**, ya?"
-        elif result.field_type == "category":
-            msg = f"Kategorinya **{result.interpreted_value}**, setuju?"
-        else:
-            msg = f"{result.field_type} Anda adalah **{result.interpreted_value}**, benar?"
+        msg = get_confirmation_message(result.field_type, result.interpreted_value)
 
         if result.alternatives:
             msg += f"\n\nAtau mungkin Anda maksud: {', '.join(result.alternatives)}?"

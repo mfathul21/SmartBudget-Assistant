@@ -15,6 +15,11 @@ from llm.input_interpreter import (
     MatchConfidence,
 )
 from llm.chat_integration import ChatIntegrationHelper
+from llm.interpreter_config import (
+    is_confirmation_yes,
+    is_confirmation_no,
+    CONFIRMATION_RESPONSE_TEMPLATES,
+)
 
 logger = get_logger(__name__)
 
@@ -181,26 +186,29 @@ class InterpretationMiddleware:
         Returns:
             Dict with confirmation result
         """
-        response_lower = user_response.lower().strip()
-        is_confirmed = response_lower in ["ya", "yes", "y", "benar", "iya"]
+        is_confirmed = is_confirmation_yes(user_response)
 
         if is_confirmed:
             return {
                 "confirmed": True,
                 "field_name": checkpoint.field_name,
                 "value": checkpoint.interpreted_value,
-                "message": f"✅ Bagus! {checkpoint.field_type.title()} {checkpoint.interpreted_value} sudah dikonfirmasi. Lanjut yuk!",
+                "message": CONFIRMATION_RESPONSE_TEMPLATES["confirmed"].format(
+                    field_type=checkpoint.field_type,
+                    value=checkpoint.interpreted_value,
+                ),
             }
         else:
             return {
                 "confirmed": False,
                 "field_name": checkpoint.field_name,
-                "message": (
-                    f"Oke, gak jadi pakai '{checkpoint.interpreted_value}'.\n"
-                    f"Beritahu saya {checkpoint.field_type} yang benar ya!"
+                "message": CONFIRMATION_RESPONSE_TEMPLATES["rejected"].format(
+                    value=checkpoint.interpreted_value,
+                    field_type=checkpoint.field_type,
                 ),
-                "ask_user": (
-                    f"Berikan {checkpoint.field_type} yang pas untuk {checkpoint.field_name}"
+                "ask_user": CONFIRMATION_RESPONSE_TEMPLATES["rejected_ask"].format(
+                    field_type=checkpoint.field_type,
+                    field_name=checkpoint.field_name,
                 ),
             }
 
