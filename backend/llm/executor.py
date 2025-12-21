@@ -8,6 +8,16 @@ import re
 from typing import Dict, Any, Optional
 from core import get_logger, TransactionValidator, ValidationError
 from database import get_db
+from llm.validation_utils import (
+    validate_account,
+    validate_amount,
+    validate_category,
+    validate_name,
+    validate_date,
+    format_amount_confirmation,
+    suggest_category,
+    VALID_CATEGORIES_BY_TYPE,
+)
 
 try:
     import dateparser
@@ -140,7 +150,7 @@ def _execute_add_transaction(
 
     db = get_db()
 
-    # Detect transaction type
+    # Detect transaction type - MUST be explicit, no defaults
     tx_type = args.get("type")
     if not tx_type:
         if "expense" in action_name or action_name == "record_expense":
@@ -148,14 +158,102 @@ def _execute_add_transaction(
         elif "income" in action_name or action_name == "record_income":
             tx_type = "income"
         else:
-            tx_type = "expense"  # default
+            # No explicit type provided, ask user
+            return {
+                "success": False,
+                "message": "Tipe transaksi harus jelas",
+                "code": "MISSING_TYPE",
+                "ask_user": "Apakah ini pemasukan (income) atau pengeluaran (expense)?\n"
+                "Contoh: 'Catat pemasukan 500k' atau 'Catat pengeluaran 50k'",
+                "requires_clarification": True,
+            }
 
     # Parse amount
     amount = _parse_amount(args.get("amount"))
+    if amount is None or amount <= 0:
+        return {
+            "success": False,
+            "message": "Jumlah transaksi tidak valid",
+            "code": "MISSING_AMOUNT",
+            "ask_user": "Berapa jumlahnya?\nContoh: '50 ribu', '500000', '1.5 juta'",
+            "requires_clarification": True,
+        }
+
     category = args.get("category", "").strip()
     description = args.get("description", "").strip()
     date = args.get("date")
-    account = args.get("account", "Cash").strip()
+    account = args.get("account", "").strip()  # NO DEFAULT - ask user if missing
+
+    # Validate required fields BEFORE defaulting
+    # Category is required for income/expense
+    if not category:
+        suggested = suggest_category(description, tx_type) if description else None
+        return {
+            "success": False,
+            "message": "Kategori transaksi harus diisi",
+            "code": "MISSING_CATEGORY",
+            "ask_user": f"Kategori apa untuk {tx_type} ini?\n"
+            f"Pilihan: {', '.join(VALID_CATEGORIES_BY_TYPE.get(tx_type, []))}"
+            + (f"\n(Saran: {suggested})" if suggested else ""),
+            "requires_clarification": True,
+        }
+
+    # Account is required - ask if not provided
+    if not account:
+        return {
+            "success": False,
+            "message": "Akun transaksi harus diisi",
+            "code": "MISSING_ACCOUNT",
+            "ask_user": "Akun mana yang digunakan?\n"
+            "Pilihan: Cash, BCA, Gopay, Maybank, Seabank, dan lainnya",
+            "requires_clarification": True,
+        }
+
+    # Validate account
+    is_valid, normalized_account, error = validate_account(account)
+    if not is_valid:
+        return {
+            "success": False,
+            "message": error,
+            "code": "INVALID_ACCOUNT",
+            "ask_user": error,
+            "requires_clarification": True,
+        }
+    account = normalized_account
+
+    # Date - ask user if not provided (don't default to today)
+    if not date:
+        return {
+            "success": False,
+            "message": "Tanggal transaksi harus diisi",
+            "code": "MISSING_DATE",
+            "ask_user": "Kapan transaksinya?\n"
+            "Format: YYYY-MM-DD (contoh: 2025-12-20)\n"
+            "atau tanggal lengkap (contoh: 20 Desember 2025)",
+            "requires_clarification": True,
+        }
+
+    # Validate date format
+    is_valid_date, normalized_date, date_error = validate_date(date)
+    if not is_valid_date:
+        return {
+            "success": False,
+            "message": date_error,
+            "code": "INVALID_DATE",
+            "ask_user": date_error,
+            "requires_clarification": True,
+        }
+
+    # Confirm large amount
+    needs_confirm, confirm_msg = format_amount_confirmation(amount, "transaksi")
+    if needs_confirm:
+        return {
+            "success": False,
+            "message": "Konfirmasi jumlah besar",
+            "code": "CONFIRM_AMOUNT",
+            "ask_user": confirm_msg + "\nApakah benar Rp " + f"{amount:,.0f}?",
+            "requires_confirmation": True,
+        }
 
     # Validate using TransactionValidator
     try:
@@ -165,7 +263,7 @@ def _execute_add_transaction(
                 "amount": amount,
                 "category": category,
                 "description": description,
-                "date": date or datetime.now().strftime("%Y-%m-%d"),
+                "date": normalized_date,
             }
         )
     except ValidationError as ve:
@@ -180,6 +278,7 @@ def _execute_add_transaction(
             "message": ve.message,
             "code": ve.code,
             "ask_user": f"Mohon lengkapi: {ve.message}",
+            "requires_clarification": True,
         }
 
     # Execute transaction with direct database operation
@@ -217,7 +316,7 @@ def _execute_add_transaction(
 
 
 def _execute_create_savings_goal(user_id: int, args: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute create savings goal with validation"""
+    """Execute create savings goal with validation - NO DEFAULTS"""
 
     db = get_db()
     name = args.get("name", "").strip()
@@ -225,50 +324,71 @@ def _execute_create_savings_goal(user_id: int, args: Dict[str, Any]) -> Dict[str
     target_date = args.get("target_date", "").strip()
     description = args.get("description", "").strip()
 
-    # Validation
-    if not name or len(name) == 0:
+    # Validation - name required
+    if not name:
         return {
             "success": False,
             "message": "Nama target tabungan wajib diisi",
             "code": "MISSING_NAME",
-            "ask_user": "Mohon sebutkan nama target tabungan (contoh: Liburan Bali, Dana Darurat, Laptop Baru)",
+            "ask_user": "Apa nama target tabungan Anda?\nContoh: Umroh, Liburan Bali, Dana Darurat, Laptop Baru",
+            "requires_clarification": True,
         }
 
-    if not name or len(name) > 200:
+    # Validate name length
+    is_valid, name_error = validate_name(
+        name, "Nama target tabungan", {"min_length": 1, "max_length": 100}
+    )
+    if not is_valid:
         return {
             "success": False,
-            "message": "Nama target terlalu panjang",
-            "code": "NAME_TOO_LONG",
+            "message": name_error,
+            "code": "INVALID_NAME",
+            "ask_user": name_error,
+            "requires_clarification": True,
         }
 
+    # Validate amount required
     if target_amount is None or target_amount <= 0:
         return {
             "success": False,
             "message": "Target jumlah wajib diisi dan harus positif",
             "code": "MISSING_AMOUNT",
-            "ask_user": "Mohon sebutkan target jumlah tabungan dalam rupiah",
+            "ask_user": "Berapa target jumlahnya?\nContoh: '100 juta', '50000000', '1.5 miliar'",
+            "requires_clarification": True,
         }
 
-    # Parse target date if provided
-    if target_date:
-        try:
-            datetime.strptime(target_date, "%Y-%m-%d")
-        except ValueError:
-            if dateparser:
-                parsed_dt = dateparser.parse(target_date, locales=["id", "en"])
-                if parsed_dt:
-                    target_date = parsed_dt.date().isoformat()
-                else:
-                    # If dateparser fails, try to handle year-only format
-                    if re.match(r'^\d{4}$', target_date):
-                        target_date = f"{target_date}-12-31"
-                    else:
-                        return {
-                            "success": False,
-                            "message": "Format tanggal tidak valid. Gunakan YYYY-MM-DD atau format tanggal lengkap",
-                            "code": "INVALID_DATE",
-                            "ask_user": "Mohon berikan tanggal dalam format YYYY-MM-DD (contoh: 2026-02-28) atau tanggal lengkap",
-                        }
+    # Validate amount not too large
+    is_valid, amount_error = validate_amount(target_amount, "Target jumlah")
+    if not is_valid:
+        return {
+            "success": False,
+            "message": amount_error,
+            "code": "INVALID_AMOUNT",
+            "ask_user": amount_error,
+            "requires_clarification": True,
+        }
+
+    # Target date: ASK user if not provided (don't default to null)
+    if not target_date:
+        return {
+            "success": False,
+            "message": "Target tanggal diperlukan",
+            "code": "MISSING_TARGET_DATE",
+            "ask_user": "Kapan ingin mencapai target ini?\n"
+            "Contoh: '2025-12-31', '31 Desember 2025', atau '2030' (tahun)",
+            "requires_clarification": True,
+        }
+
+    # Parse target date
+    is_valid_date, normalized_date, date_error = validate_date(target_date)
+    if not is_valid_date:
+        return {
+            "success": False,
+            "message": date_error,
+            "code": "INVALID_DATE",
+            "ask_user": date_error,
+            "requires_clarification": True,
+        }
 
     try:
         logger.info(
@@ -276,6 +396,7 @@ def _execute_create_savings_goal(user_id: int, args: Dict[str, Any]) -> Dict[str
             user_id=user_id,
             name=name,
             target_amount=target_amount,
+            target_date=normalized_date,
         )
 
         cur = db.cursor()
@@ -286,7 +407,7 @@ def _execute_create_savings_goal(user_id: int, args: Dict[str, Any]) -> Dict[str
             VALUES (%s, %s, %s, %s, %s, NOW())
             RETURNING id
             """,
-            (user_id, name, target_amount, description, target_date),
+            (user_id, name, target_amount, description, normalized_date),
         )
         goal_id = cur.fetchone()[0]
         db.commit()
@@ -296,12 +417,28 @@ def _execute_create_savings_goal(user_id: int, args: Dict[str, Any]) -> Dict[str
             user_id=user_id,
             goal_id=goal_id,
             name=name,
+            target_date=normalized_date,
         )
+
+        # Format date for display
+        from datetime import datetime as dt
+
+        try:
+            target_dt = dt.strptime(normalized_date, "%Y-%m-%d")
+            date_display = target_dt.strftime("%d %B %Y")  # Format: 31 December 2030
+        except:
+            date_display = normalized_date
 
         return {
             "success": True,
-            "message": f"✅ Target tabungan '{name}' berhasil dibuat (Target: Rp {target_amount:,.0f})",
-            "goal_id": goal_id,
+            "message": f"✅ Target tabungan '{name}' berhasil dibuat",
+            "details": {
+                "name": name,
+                "target_amount": target_amount,
+                "target_date": normalized_date,
+                "target_date_display": date_display,
+                "goal_id": goal_id,
+            },
         }
 
     except Exception as e:
@@ -424,7 +561,7 @@ def _execute_update_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str,
 
 
 def _execute_delete_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute delete transaction with safety checks"""
+    """Execute delete transaction with safety checks & confirmation"""
 
     transaction_id = args.get("id")
 
@@ -433,6 +570,8 @@ def _execute_delete_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str,
             "success": False,
             "message": "ID transaksi wajib diisi",
             "code": "MISSING_ID",
+            "ask_user": "Transaksi mana yang ingin dihapus? (berikan ID transaksi)",
+            "requires_clarification": True,
         }
 
     try:
@@ -445,15 +584,14 @@ def _execute_delete_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str,
 
         cur = db.cursor()
 
-        # Verify and delete
+        # Get transaction details FIRST before deleting
         cur.execute(
-            "DELETE FROM transactions WHERE id = %s AND user_id = %s RETURNING id",
+            "SELECT id, date, type, category, amount, description, account FROM transactions WHERE id = %s AND user_id = %s",
             (transaction_id, user_id),
         )
+        tx_data = cur.fetchone()
 
-        deleted = cur.fetchone()
-
-        if not deleted:
+        if not tx_data:
             logger.warning(
                 "transaction_not_found_for_delete",
                 user_id=user_id,
@@ -463,6 +601,36 @@ def _execute_delete_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str,
                 "success": False,
                 "message": "Transaksi tidak ditemukan",
                 "code": "TRANSACTION_NOT_FOUND",
+            }
+
+        # Require confirmation for large amounts
+        if tx_data["amount"] > 5_000_000:
+            return {
+                "success": False,
+                "message": "Transaksi besar - perlu konfirmasi sebelum dihapus",
+                "code": "CONFIRM_DELETE",
+                "ask_user": f"Yakin ingin menghapus transaksi ini?\n\n"
+                           f"📅 Tanggal: {tx_data['date']}\n"
+                           f"💰 Jumlah: Rp {tx_data['amount']:,.0f}\n"
+                           f"🏷️  Tipe: {tx_data['type']}\n"
+                           f"📝 Deskripsi: {tx_data['description']}\n\n"
+                           f"Ketik 'hapus' untuk konfirmasi",
+                "requires_confirmation": True,
+                "transaction_preview": tx_data,
+            }
+
+        # Delete transaction
+        cur.execute(
+            "DELETE FROM transactions WHERE id = %s AND user_id = %s RETURNING id",
+            (transaction_id, user_id),
+        )
+
+        deleted = cur.fetchone()
+        if not deleted:
+            return {
+                "success": False,
+                "message": "Gagal menghapus transaksi",
+                "code": "DELETE_FAILED",
             }
 
         db.commit()
@@ -495,44 +663,159 @@ def _execute_delete_transaction(user_id: int, args: Dict[str, Any]) -> Dict[str,
 
 
 def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute transfer between accounts with validation"""
+    """Execute transfer between accounts with validation - NO DEFAULTS"""
 
     amount = _parse_amount(args.get("amount"))
     from_account = args.get("from_account", "").strip()
     to_account = args.get("to_account", "").strip()
     date = args.get("date")
-    description = args.get("description", "Transfer").strip()
+    description = args.get("description", "").strip()
 
-    # Validation
+    # Validate amount
     if not amount or amount <= 0:
         return {
             "success": False,
-            "message": "Jumlah transfer wajib diisi dan harus positif",
-            "code": "INVALID_AMOUNT",
-            "ask_user": "Mohon sebutkan jumlah yang akan ditransfer",
+            "message": "Jumlah transfer harus positif",
+            "code": "MISSING_AMOUNT",
+            "ask_user": "Berapa jumlah yang akan ditransfer?\nContoh: '100 ribu', '1 juta', '500000'",
+            "requires_clarification": True,
         }
 
+    # Validate amount not too large
+    is_valid, amount_error = validate_amount(amount, "Jumlah transfer")
+    if not is_valid:
+        return {
+            "success": False,
+            "message": amount_error,
+            "code": "INVALID_AMOUNT",
+            "ask_user": amount_error,
+            "requires_clarification": True,
+        }
+
+    # From account is required
     if not from_account:
         return {
             "success": False,
             "message": "Akun sumber wajib diisi",
             "code": "MISSING_FROM_ACCOUNT",
-            "ask_user": "Mohon sebutkan akun sumber transfer",
+            "ask_user": "Dari akun mana?\nPilihan: Cash, BCA, Gopay, Maybank, Seabank, dan lainnya",
+            "requires_clarification": True,
         }
 
+    # To account is required
     if not to_account:
         return {
             "success": False,
             "message": "Akun tujuan wajib diisi",
             "code": "MISSING_TO_ACCOUNT",
-            "ask_user": "Mohon sebutkan akun tujuan transfer",
+            "ask_user": "Ke akun mana?\nPilihan: Cash, BCA, Gopay, Maybank, Seabank, dan lainnya",
+            "requires_clarification": True,
         }
 
+    # Validate accounts exist & normalize
+    is_valid_from, normalized_from, error_from = validate_account(from_account)
+    if not is_valid_from:
+        return {
+            "success": False,
+            "message": error_from,
+            "code": "INVALID_FROM_ACCOUNT",
+            "ask_user": error_from,
+            "requires_clarification": True,
+        }
+
+    is_valid_to, normalized_to, error_to = validate_account(to_account)
+    if not is_valid_to:
+        return {
+            "success": False,
+            "message": error_to,
+            "code": "INVALID_TO_ACCOUNT",
+            "ask_user": error_to,
+            "requires_clarification": True,
+        }
+
+    from_account = normalized_from
+    to_account = normalized_to
+
+    # Check different accounts
     if from_account == to_account:
         return {
             "success": False,
-            "message": "Akun sumber dan tujuan tidak boleh sama",
+            "message": "Akun sumber dan tujuan harus berbeda",
             "code": "SAME_ACCOUNT",
+            "ask_user": f"Akun '{from_account}' tidak bisa transfer ke dirinya sendiri.",
+            "requires_clarification": True,
+        }
+
+    # Check balance (prevent negative balance)
+    cur_balance = db.execute(
+        """SELECT COALESCE(SUM(CASE WHEN type='income' THEN amount 
+                                    WHEN type='expense' THEN -amount 
+                                    ELSE 0 END), 0) as balance
+           FROM transactions WHERE user_id = %s AND account = %s""",
+        (user_id, from_account),
+    ).fetchone()["balance"]
+
+    if amount > cur_balance:
+        return {
+            "success": False,
+            "message": "Saldo tidak cukup",
+            "code": "INSUFFICIENT_BALANCE",
+            "ask_user": f"Saldo {from_account}: Rp {cur_balance:,.0f}\n"
+                       f"Tidak cukup untuk transfer Rp {amount:,.0f}\n"
+                       f"Kurang: Rp {amount - cur_balance:,.0f}",
+            "requires_clarification": True,
+            "available_balance": cur_balance,
+            "required_amount": amount,
+            "shortfall": amount - cur_balance,
+        }
+
+    # Date: ask if not provided
+    if not date:
+        return {
+            "success": False,
+            "message": "Tanggal transfer harus diisi",
+            "code": "MISSING_DATE",
+            "ask_user": "Kapan transfernya?\nFormat: YYYY-MM-DD atau tanggal lengkap",
+            "requires_clarification": True,
+        }
+
+    # Validate & parse date
+    is_valid_date, normalized_date, date_error = validate_date(date)
+    if not is_valid_date:
+        return {
+            "success": False,
+            "message": date_error,
+            "code": "INVALID_DATE",
+            "ask_user": date_error,
+            "requires_clarification": True,
+        }
+
+    # Description: ask if not provided
+    if not description:
+        return {
+            "success": False,
+            "message": "Deskripsi transfer harus diisi",
+            "code": "MISSING_DESCRIPTION",
+            "ask_user": "Apa tujuan/alasan transfer ini?",
+            "requires_clarification": True,
+        }
+
+    # Confirm large transfers
+    needs_confirm, confirm_msg = format_amount_confirmation(amount, "transfer")
+    if needs_confirm:
+        return {
+            "success": False,
+            "message": "Transfer besar - perlu konfirmasi",
+            "code": "CONFIRM_TRANSFER",
+            "ask_user": f"{confirm_msg}\n\nTransfer dari {from_account} ke {to_account}\nJumlah: Rp {amount:,.0f}",
+            "requires_confirmation": True,
+            "transfer_preview": {
+                "amount": amount,
+                "from": from_account,
+                "to": to_account,
+                "date": normalized_date,
+                "description": description,
+            },
         }
 
     try:
@@ -552,7 +835,7 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
             (
                 user_id,
-                date or datetime.now().strftime("%Y-%m-%d"),
+                normalized_date,
                 "expense",
                 "Transfer",
                 f"Transfer to {to_account}: {description}",
@@ -568,7 +851,7 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
             (
                 user_id,
-                date or datetime.now().strftime("%Y-%m-%d"),
+                normalized_date,
                 "income",
                 "Transfer",
                 f"Transfer from {from_account}: {description}",
@@ -590,6 +873,14 @@ def _execute_transfer_funds(user_id: int, args: Dict[str, Any]) -> Dict[str, Any
         return {
             "success": True,
             "message": f"✅ Transfer Rp {amount:,.0f} dari {from_account} ke {to_account} berhasil",
+            "details": {
+                "from_account": from_account,
+                "to_account": to_account,
+                "amount": amount,
+                "date": normalized_date,
+                "description": description,
+                "balance_from": cur_balance - amount,
+            },
         }
 
     except Exception as e:
