@@ -73,6 +73,20 @@ backend/*.backup
 backend/*.bak
 
 # ==========================================
+# Scripts & One-Time Utilities
+# ==========================================
+scripts/
+!scripts/.gitkeep
+
+# ==========================================
+# Database Migrations
+# ==========================================
+# Keep migration scripts but ignore cache
+backend/migrations/__pycache__/
+backend/migrations/*.pyc
+backend/migrations/*.bak
+
+# ==========================================
 # Uploads - User Generated Content
 # ==========================================
 public/uploads/avatars/*
