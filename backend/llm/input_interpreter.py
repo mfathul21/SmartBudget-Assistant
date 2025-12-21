@@ -13,7 +13,6 @@ import re
 
 from validation_utils import (
     parse_natural_date,
-    find_similar_account,
     COMMON_ACCOUNT_ALIASES,
     VALID_ACCOUNTS,
     VALID_CATEGORIES_BY_TYPE,
@@ -198,7 +197,12 @@ class InputInterpreter:
             interpreted_value=None,
             confidence=MatchConfidence.NO_MATCH,
             needs_confirmation=False,
-            explanation=get_explanation("account", "no_match", input=user_input, valid_options=", ".join(valid_accounts)),
+            explanation=get_explanation(
+                "account",
+                "no_match",
+                input=user_input,
+                valid_options=", ".join(valid_accounts),
+            ),
         )
 
     def interpret_date(self, user_input: str) -> InterpretationResult:
@@ -248,7 +252,9 @@ class InputInterpreter:
                 interpreted_value=parsed_date,
                 confidence=confidence,
                 needs_confirmation=not is_natural_term,
-                explanation=get_explanation("date", "natural", input=user_input, formatted=formatted),
+                explanation=get_explanation(
+                    "date", "natural", input=user_input, formatted=formatted
+                ),
             )
 
         # Try strict YYYY-MM-DD format
@@ -307,7 +313,9 @@ class InputInterpreter:
                 interpreted_value=None,
                 confidence=MatchConfidence.NO_MATCH,
                 needs_confirmation=False,
-                explanation=get_explanation("category", "empty", categories=", ".join(categories)),
+                explanation=get_explanation(
+                    "category", "empty", categories=", ".join(categories)
+                ),
             )
 
         user_input = user_input.strip()
@@ -375,7 +383,12 @@ class InputInterpreter:
             interpreted_value=None,
             confidence=MatchConfidence.NO_MATCH,
             needs_confirmation=False,
-            explanation=get_explanation("category", "no_match", input=user_input, valid_options=", ".join(valid_categories)),
+            explanation=get_explanation(
+                "category",
+                "no_match",
+                input=user_input,
+                valid_options=", ".join(valid_categories),
+            ),
         )
 
     def format_confirmation_message(self, result: InterpretationResult) -> str:

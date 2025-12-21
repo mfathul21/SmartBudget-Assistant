@@ -9,10 +9,10 @@ and update language, thresholds, and patterns.
 # CONFIDENCE THRESHOLDS FOR FUZZY MATCHING
 # =============================================================================
 FUZZY_MATCHING_THRESHOLDS = {
-    "exact": 1.0,      # Perfect match
-    "high": 0.85,      # Fuzzy match > 85%
-    "medium": 0.65,    # Fuzzy match 65-85%
-    "low": 0.40,       # Fuzzy match 40-65%
+    "exact": 1.0,  # Perfect match
+    "high": 0.85,  # Fuzzy match > 85%
+    "medium": 0.65,  # Fuzzy match 65-85%
+    "low": 0.40,  # Fuzzy match 40-65%
 }
 
 # =============================================================================
@@ -46,7 +46,9 @@ NATURAL_DATE_TERMS = {
 }
 
 # Flattened list for quick lookup
-ALL_NATURAL_DATE_TERMS = NATURAL_DATE_TERMS["indonesian"] + NATURAL_DATE_TERMS["english"]
+ALL_NATURAL_DATE_TERMS = (
+    NATURAL_DATE_TERMS["indonesian"] + NATURAL_DATE_TERMS["english"]
+)
 
 # =============================================================================
 # USER CONFIRMATION RESPONSES
@@ -143,6 +145,7 @@ ERROR_MESSAGE_TEMPLATES = {
 # HELPER FUNCTIONS TO GET CONFIGURATIONS
 # =============================================================================
 
+
 def get_natural_date_terms():
     """Get all natural language date terms"""
     return ALL_NATURAL_DATE_TERMS
@@ -160,9 +163,7 @@ def is_confirmation_no(response: str) -> bool:
 
 def get_confirmation_message(field_type: str, value: str) -> str:
     """Get confirmation message for a field type"""
-    template = CONFIRMATION_TEMPLATES.get(
-        field_type, CONFIRMATION_TEMPLATES["default"]
-    )
+    template = CONFIRMATION_TEMPLATES.get(field_type, CONFIRMATION_TEMPLATES["default"])
     if "{field_type" in template:
         return template.format(field_type=field_type, value=value)
     return template.format(value=value)

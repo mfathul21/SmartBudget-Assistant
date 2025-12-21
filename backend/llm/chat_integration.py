@@ -14,33 +14,33 @@ from llm.input_interpreter import (
 
 class ChatIntegrationHelper:
     """Helper for integrating input interpretation into chat responses"""
-    
+
     @staticmethod
     def build_interpreted_fields_message(
-        interpretations: Dict[str, InterpretationResult]
+        interpretations: Dict[str, InterpretationResult],
     ) -> str:
         """
         Build a message that mentions all interpreted fields with natural language
-        
+
         Args:
             interpretations: Dict of field_type -> InterpretationResult
-            
+
         Returns:
             Markdown formatted message mentioning interpretations
         """
         if not interpretations:
             return ""
-        
+
         message_parts = []
-        
+
         for field_type, result in interpretations.items():
             if result.confidence == MatchConfidence.EXACT:
                 # No mention needed for exact matches
                 continue
-            
+
             if result.confidence == MatchConfidence.NO_MATCH:
                 continue
-            
+
             # Build natural language mention
             if field_type == "account":
                 mention = f"📱 Akun: **{result.interpreted_value}**"
@@ -50,31 +50,29 @@ class ChatIntegrationHelper:
                 mention = f"📂 Kategori: **{result.interpreted_value}**"
             else:
                 mention = f"📝 {field_type.title()}: **{result.interpreted_value}**"
-            
+
             if result.alternatives:
                 mention += f"\n   (atau {', '.join(result.alternatives)})"
-            
+
             message_parts.append(mention)
-        
+
         if not message_parts:
             return ""
-        
+
         return "\n\n" + "\n\n".join(message_parts) + "\n\nBenar semua?"
-    
+
     @staticmethod
     def build_confirmation_request(
-        field_type: str,
-        result: InterpretationResult,
-        action_name: str = ""
+        field_type: str, result: InterpretationResult, action_name: str = ""
     ) -> Dict[str, Any]:
         """
         Build a complete confirmation request for user with natural language
-        
+
         Args:
             field_type: Type of field being confirmed
             result: InterpretationResult
             action_name: Name of action being performed
-            
+
         Returns:
             Dict with confirmation message and details
         """
@@ -87,10 +85,12 @@ class ChatIntegrationHelper:
             confirmation_msg = f"Kategorinya **{result.interpreted_value}**, setuju?"
         else:
             confirmation_msg = f"{field_type.title()} Anda adalah **{result.interpreted_value}**, benar?"
-        
+
         if result.alternatives:
-            confirmation_msg += f"\n\nAtau mungkin Anda maksud: {', '.join(result.alternatives)}?"
-        
+            confirmation_msg += (
+                f"\n\nAtau mungkin Anda maksud: {', '.join(result.alternatives)}?"
+            )
+
         return {
             "requires_confirmation": True,
             "confirmation_message": confirmation_msg,
@@ -101,48 +101,48 @@ class ChatIntegrationHelper:
             "alternatives": result.alternatives or [],
             "action": action_name,
         }
-    
+
     @staticmethod
     def interpret_and_mention_fields(
         fields: Dict[str, str],
         field_types: Dict[str, str],  # field_name -> field_type (account, date, etc)
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Interpret multiple fields and return interpretations + mention message
-        
+
         Args:
             fields: Dict of field_name -> user_value
             field_types: Dict of field_name -> field_type_to_interpret
             **kwargs: Additional kwargs for specific field types (e.g., tx_type for category)
-            
+
         Returns:
             Dict with interpretations and mention message
         """
         interpretations = {}
         confirmation_needed = None
-        
+
         for field_name, user_value in fields.items():
             if not user_value:
                 continue
-            
+
             field_type = field_types.get(field_name)
             if not field_type:
                 continue
-            
+
             # Get specific kwargs for this field
             field_kwargs = {}
             if field_type == "category":
                 field_kwargs["tx_type"] = kwargs.get("tx_type", "expense")
-            
+
             # Interpret the field
             result = interpret_input(field_type, user_value, **field_kwargs)
             interpretations[field_name] = result
-            
+
             # If any field needs confirmation, prioritize that
             if result.needs_confirmation and not confirmation_needed:
                 confirmation_needed = (field_name, result)
-        
+
         return {
             "interpretations": interpretations,
             "mention_message": ChatIntegrationHelper.build_interpreted_fields_message(
@@ -150,58 +150,59 @@ class ChatIntegrationHelper:
             ),
             "confirmation_needed": confirmation_needed,
         }
-    
+
     @staticmethod
     def format_ai_response_with_interpretations(
         main_response: str,
         interpretations: Dict[str, InterpretationResult],
-        include_confirmation: bool = False
+        include_confirmation: bool = False,
     ) -> str:
         """
         Format AI response to include interpretation details
-        
+
         Args:
             main_response: Main AI response text
             interpretations: Dict of interpreted fields
             include_confirmation: Whether to ask for confirmation
-            
+
         Returns:
             Formatted response with interpretation details
         """
         response = main_response
-        
+
         # Add interpretation mentions
         exact_matches = []
         fuzzy_matches = []
-        
+
         for field_name, result in interpretations.items():
-            if result.confidence == MatchConfidence.EXACT or result.confidence == MatchConfidence.NO_MATCH:
+            if (
+                result.confidence == MatchConfidence.EXACT
+                or result.confidence == MatchConfidence.NO_MATCH
+            ):
                 continue
-            
+
             mention = (
                 f"💭 *{field_name}: '{result.original_input}' -> {result.interpreted_value}* "
                 f"({result.confidence.value})"
             )
-            
+
             if result.confidence in [MatchConfidence.MEDIUM, MatchConfidence.LOW]:
                 fuzzy_matches.append(mention)
             else:
                 exact_matches.append(mention)
-        
+
         if exact_matches or fuzzy_matches:
             response += "\n\n---"
             if fuzzy_matches:
                 response += "\n" + "\n".join(fuzzy_matches)
             response += "\n\nBenar demikian? Atau ada yang perlu diubah?"
-        
+
         return response
 
 
 # Convenience function
 def interpret_and_mention(
-    fields: Dict[str, str],
-    field_types: Dict[str, str],
-    **kwargs
+    fields: Dict[str, str], field_types: Dict[str, str], **kwargs
 ) -> Dict[str, Any]:
     """
     Convenience wrapper for ChatIntegrationHelper.interpret_and_mention_fields
